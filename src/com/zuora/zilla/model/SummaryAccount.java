@@ -1,5 +1,7 @@
 package com.zuora.zilla.model;
 
+import java.math.BigDecimal;
+import java.util.Calendar;
 import java.util.List;
 
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -10,10 +12,10 @@ public class SummaryAccount {
 	private String error;
 
 	private String name;
-	private String balance;
-	private String lastPaymentAmount;
-	private String lastPaymentDate;
-	private String lastInvoiceDate;
+	private BigDecimal balance;
+	private BigDecimal lastPaymentAmount;
+	private Calendar lastPaymentDate;
+	private Calendar lastInvoiceDate;
 	
 	private SummaryContact contactSummary;
 	private List<PaymentDetail> paymentMethodSummaries;
@@ -45,45 +47,45 @@ public class SummaryAccount {
 		this.name = name;
 	}
 
+	@JsonProperty("contactSummary")
+	public SummaryContact getContactSummary() {
+		return contactSummary;
+	}
+
 	@JsonProperty("Balance")
-	public String getBalance() {
+	public BigDecimal getBalance() {
 		return balance;
 	}
 
-	public void setBalance(String balance) {
+	public void setBalance(BigDecimal balance) {
 		this.balance = balance;
 	}
 
 	@JsonProperty("LastPaymentAmount")
-	public String getLastPaymentAmount() {
+	public BigDecimal getLastPaymentAmount() {
 		return lastPaymentAmount;
 	}
 
-	public void setLastPaymentAmount(String lastPaymentAmount) {
+	public void setLastPaymentAmount(BigDecimal lastPaymentAmount) {
 		this.lastPaymentAmount = lastPaymentAmount;
 	}
 
 	@JsonProperty("LastPaymentDate")
-	public String getLastPaymentDate() {
+	public Calendar getLastPaymentDate() {
 		return lastPaymentDate;
 	}
 
-	public void setLastPaymentDate(String lastPaymentDate) {
+	public void setLastPaymentDate(Calendar lastPaymentDate) {
 		this.lastPaymentDate = lastPaymentDate;
 	}
 
 	@JsonProperty("LastInvoiceDate")
-	public String getLastInvoiceDate() {
+	public Calendar getLastInvoiceDate() {
 		return lastInvoiceDate;
 	}
 
-	public void setLastInvoiceDate(String lastInvoiceDate) {
+	public void setLastInvoiceDate(Calendar lastInvoiceDate) {
 		this.lastInvoiceDate = lastInvoiceDate;
-	}
-
-	@JsonProperty("contactSummary")
-	public SummaryContact getContactSummary() {
-		return contactSummary;
 	}
 
 	public void setContactSummary(SummaryContact contactSummary) {

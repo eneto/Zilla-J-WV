@@ -3,6 +3,7 @@ package com.zuora.zilla.controller;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
@@ -11,6 +12,7 @@ import java.util.TimeZone;
 
 import com.zuora.api.*;
 import com.zuora.api.object.*;
+import com.zuora.zilla.controller.*;
 import com.zuora.zilla.model.*;
 import com.zuora.zilla.util.*;
 
@@ -41,152 +43,116 @@ public class AccountManager {
 		}
 	}
 	
-	public SummaryAccount getAccountDetail(String accountEmail) {
-		SummaryAccount summary = null;
-		try {
-			// Find the AccountId associated with this contact email
-			Query query = new Query();
-			query.setQueryString("SELECT AccountId FROM Contact WHERE WorkEmail = '" + accountEmail + "'");
-			QueryResponse resp = stub.query(query, this.header);
-			
-			String accountId = null;
-			if (resp.getResult().getSize() != 0) {
-				accountId = ((Contact) resp.getResult().getRecords()[0]).getAccountId().getID();
-			} else {
-				// User doesn't exist
-				return null;
-			}
-			
-			// Get the account associated
-			summary = new SummaryAccount();
-			query = new Query();
-			query.setQueryString("SELECT Id, Name, Balance, LastInvoiceDate FROM Account WHERE Id = '" + accountId + "'");
-			resp = stub.query(query, this.header);
-//			for (Account account : (Account[]) resp.getResult().getRecords()) {
-			for (ZObject zobject : resp.getResult().getRecords()) {
-				Account account = (Account) zobject;
-				summary.setName(account.getName());
-				summary.setBalance(account.getBalance().toPlainString());
-				
-				// Get the date of last invoice
-				TimeZone tz = TimeZone.getTimeZone("America/Los_Angeles");
-				DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-				dateFormat.setTimeZone(tz);
-				Calendar date = account.getLastInvoiceDate();
-				if (date != null) {
-					date.setTimeZone(tz);
-					summary.setLastInvoiceDate(dateFormat.format(date.getTime()));
-				} else {
-					summary.setLastInvoiceDate(null);
-				}
-				
-				// Query the last payment
-				Query paymentQuery = new Query();
-				paymentQuery.setQueryString("SELECT Amount, EffectiveDate, CreatedDate FROM Payment WHERE AccountId = '" + accountId + "'");
-				QueryResponse paymentResp = stub.query(paymentQuery, this.header);
-				
-				if (paymentResp.getResult().getSize() == 0) {
-					summary.setLastPaymentAmount(null);
-					summary.setLastPaymentDate(null);
-				} else {
-					List<Payment> listPayments = new ArrayList<Payment>();
-					
-					for (ZObject z : paymentResp.getResult().getRecords()) {
-						Payment payment = (Payment) z;
-						listPayments.add(payment);
-					}
-					Collections.sort(listPayments, new CmpPayments());
-					Payment[] payments = (Payment[]) listPayments.toArray();
-					// TODO check this has been really sorted..
-					summary.setLastPaymentAmount(payments[0].getAmount().toPlainString());
-					// Set TimeZone
-					Calendar effectiveDate = payments[0].getEffectiveDate();
-					effectiveDate.setTimeZone(tz);
-					summary.setLastPaymentDate(dateFormat.format(effectiveDate.getTime()));
-				}
-				
-			}
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return summary;
-	}
-
-	/**
-	 * Get contact information from the given user, including address
-	 * information.
-	 * 
-	 * @param accountEmail
-	 *            email of the target account
-	 * @return Contact Detail model populated with a single contact on this
-	 *         account
-	 */
-	public SummaryContact getContactDetail(String accountEmail) {
-		SummaryContact summaryContact = new SummaryContact();
-		
-		// Get Account ID associated with this email address
-		String accountId = null;
-		Query accountQuery = new Query();
-		accountQuery.setQueryString("SELECT Id FROM Account WHERE Name='" + accountEmail + "'");
-		try {
-			QueryResult result = this.stub.query(accountQuery, header).getResult();
-			Account acc = (Account) result.getRecords()[0];
-			accountId = acc.getId().getID();
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		if (accountId == null) {
-			summaryContact.setSuccess(false);
-			summaryContact.setError("USER_DOESNT_EXIST");
-			return summaryContact;
-		}
-		
-		// Get contact information associated with this account ID
-		Query contactQuery = new Query();
-		contactQuery.setQueryString("SELECT FirstName,LastName,Address1,Address2,City,State,PostalCode,Country FROM Contact WHERE AccountId='" + accountId + "'");
-		try {
-			QueryResult result = this.stub.query(contactQuery, header).getResult();
-			
-			if (result.getSize() == 0) {
-				summaryContact.setSuccess(false);
-				summaryContact.setError("CONTACT_DOESNT_EXIST");
-				return summaryContact;
-			}
-			
-			Contact contact = (Contact) result.getRecords()[0];
-			
-			summaryContact.setFirstName(contact.getFirstName());
-			summaryContact.setLastName(contact.getLastName());
-			summaryContact.setCountry(contact.getCountry());
-			summaryContact.setState((contact.getState() != null) ? contact.getState() : "");
-			summaryContact.setAddress1((contact.getAddress1() != null) ? contact.getAddress1() : "");
-			summaryContact.setAddress2((contact.getAddress2() != null) ? contact.getAddress2() : "");
-			summaryContact.setCity((contact.getCity() != null) ? contact.getCity() : "");
-			summaryContact.setPostalCode((contact.getPostalCode() != null) ? contact.getPostalCode() : "");
-			
-			summaryContact.setSuccess(true);
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		return summaryContact;
-	}
-	
-	public SummaryAccount getCompleteDetail(String accountEmail) {
+	public SummaryAccount getCompleteDetail(String accountName) {
 		// Create the object and get the basic information
-		SummaryAccount summary = getAccountDetail(accountEmail);
+		SummaryAccount accountSummary = new SummaryAccount();
 		
-		// Retrieve all the payment methods
-		summary.setPaymentMethodSummaries(getPaymentMethodSummary(accountEmail));
+		Account acc = null;
+		QueryResult qresAcc = null;
+		try {
+			qresAcc = zapi.zQuery("SELECT Id,Name,Balance,LastInvoiceDate,DefaultPaymentMethodId FROM Account WHERE Name='" + accountName + "'");
+			if(qresAcc.getSize() == 0){
+				accountSummary.setSuccess(false);
+				accountSummary.setError("USER_DOESNT_EXIST");
+				return accountSummary;
+			}
+			acc = (Account) qresAcc.getRecords()[0];
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		
-		// Retrieve all contact information
-		summary.setContactSummary(getContactDetail(accountEmail));
+		//Get Account Information
+
+		accountSummary.setName(acc.getName());
+		accountSummary.setBalance(acc.getBalance());
+		accountSummary.setLastInvoiceDate(acc.getLastInvoiceDate());
+		String defaultPmId = acc.getDefaultPaymentMethodId();
 		
-		return summary;
+		QueryResult paymentResult = null;
+		try {
+			paymentResult = zapi.zQuery("SELECT Amount,EffectiveDate,CreatedDate FROM Payment WHERE AccountId='" + acc.getId() + "'");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+			
+		if(paymentResult.getSize()==0){
+			accountSummary.setLastPaymentDate(null);
+			accountSummary.setLastInvoiceDate(null);
+		} else {
+			//Sort payments by date
+			ArrayList<Payment> listPayments = new ArrayList<Payment>(Arrays.asList((Payment[]) paymentResult.getRecords()));
+			Collections.sort(listPayments, new CmpPayments());
+			Payment lastPayment = (Payment) listPayments.toArray()[0];
+			accountSummary.setLastPaymentDate(lastPayment.getEffectiveDate());
+			accountSummary.setLastPaymentAmount(lastPayment.getAmount());
+		}
+
+		//Get Contact with this email
+		SummaryContact contactSummary = new SummaryContact();
+		QueryResult qresCons = null;
+		try {
+			qresCons = zapi.zQuery("SELECT FirstName,LastName,Address1,Address2,City,State,PostalCode,Country FROM Contact WHERE AccountId='"+ acc.getId() +"'");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		Contact cont = null;
+		if(qresCons.getSize()==0){
+			accountSummary.setSuccess(false);
+			accountSummary.setError("CONTACT_DOESNT_EXIST");
+			return accountSummary;			
+		} else {
+			cont = (Contact) qresCons.getRecords()[0];
+		}
+
+		contactSummary.setFirstName(cont.getFirstName());
+		contactSummary.setLastName(cont.getLastName());
+		contactSummary.setCountry(cont.getCountry());
+		contactSummary.setState(cont.getState());
+		contactSummary.setAddress1(cont.getAddress1());
+		contactSummary.setAddress2(cont.getAddress2());
+		contactSummary.setCity(cont.getCity());
+		contactSummary.setPostalCode(cont.getPostalCode());
+
+		contactSummary.setSuccess(true);
+
+		accountSummary.setContactSummary(contactSummary);
+
+		
+		//Get PaymentMethods with this Account Id
+		
+		
+		
+		// Get payment methods with this account id
+		ArrayList<PaymentDetail> paymentSummaries = new ArrayList<PaymentDetail>();
+		
+		QueryResult qresPms = null;
+		try {
+			qresPms = zapi.zQuery("SELECT Id,CreditCardHolderName,CreditCardMaskNumber,"
+					+ "CreditCardExpirationYear,CreditCardExpirationMonth,CreditCardType "
+					+ "from PaymentMethod WHERE AccountId='" + acc.getId() + "'");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		for (ZObject z : qresPms.getRecords()) {
+			PaymentMethod pm = (PaymentMethod) z;
+			PaymentDetail d = new PaymentDetail();
+			d.setId(pm.getId());
+			d.setCardHolderName(pm.getCreditCardHolderName());
+			d.setMaskedNumber(pm.getCreditCardMaskNumber());
+			d.setExpirationYear(pm.getCreditCardExpirationYear());
+			d.setExpirationMonth(pm.getCreditCardExpirationMonth());
+			d.setCardType(pm.getCreditCardType());
+			d.setDefaultCard((pm.getId().equals(defaultPmId)));
+			paymentSummaries.add(d);
+		}
+		accountSummary.setPaymentMethodSummaries(paymentSummaries);
+		
+		
+		accountSummary.setSuccess(true);
+		return accountSummary;
+
 	}
 	
 	/**
