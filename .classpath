@@ -18,5 +18,6 @@
 	<classpathentry kind="lib" path="lib/zuora-41.jar"/>
 	<classpathentry kind="lib" path="lib/jackson-core-asl-1.9.8.jar"/>
 	<classpathentry kind="lib" path="lib/jackson-mapper-asl-1.9.8.jar"/>
+	<classpathentry kind="lib" path="lib/commons-codec-1.2.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

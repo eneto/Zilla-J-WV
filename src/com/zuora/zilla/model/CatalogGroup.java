@@ -1,5 +1,6 @@
 package com.zuora.zilla.model;
 
+import java.util.ArrayList;
 import java.util.Vector;
 
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -7,7 +8,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
 public class CatalogGroup {
 
 	private String name = "";
-	private Vector<CatalogProduct> products;
+	private ArrayList<CatalogProduct> products;
 	
 	public CatalogGroup() {
 		this.name = "";
@@ -23,11 +24,11 @@ public class CatalogGroup {
 	}
 
 	@JsonProperty("products")
-	public Vector<CatalogProduct> getProducts() {
+	public ArrayList<CatalogProduct> getProducts() {
 		return products;
 	}
 
-	public void setProducts(Vector<CatalogProduct> products) {
+	public void setProducts(ArrayList<CatalogProduct> products) {
 		this.products = products;
 	}
 }

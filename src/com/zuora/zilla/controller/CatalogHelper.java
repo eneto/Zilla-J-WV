@@ -2,7 +2,7 @@ package com.zuora.zilla.controller;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
+import java.util.ArrayList;
 
 import com.zuora.api.*;
 import com.zuora.api.object.*;
@@ -20,8 +20,8 @@ import com.zuora.zilla.util.*;
  * @author Mickael Pham <mickael.pham@zuora.com>
  */
 public class CatalogHelper {
-	/** Vector that contains all available products, rate plans and charges. */
-	private static List<CatalogGroup> catalogGroups = null;
+	/** ArrayList that contains all available products, rate plans and charges. */
+	private static ArrayList<CatalogGroup> catalogGroups = null;
 
 	/** Date formatted to query Zuora, using GMT-8 (see ZuoraUtility). */
 	private String today;
@@ -39,25 +39,25 @@ public class CatalogHelper {
 	}
 
 	/** Return all available products (available today). */
-	public void refreshCache() {
+	public ArrayList<CatalogGroup> refreshCache() {
 		CatalogHelper.catalogGroups = new ArrayList<CatalogGroup>();
 		// TODO Get the separate groups if required (base product, add on, etc.)
 
 		this.today = ZuoraUtility.getCurrentDate();
 
 		// Step #1 -> get all products
-		Vector<CatalogProduct> products = getAllProducts();
+		ArrayList<CatalogProduct> products = getAllProducts();
 
 		// Step #2 -> get all rate plans
 		for (CatalogProduct product : products) {
-			Vector<CatalogRatePlan> ratePlans = getAllRatePlans(product);
+			ArrayList<CatalogRatePlan> ratePlans = getAllRatePlans(product);
 			product.setRatePlans(ratePlans);
 		}
 
 		// Step #3 -> get all charges
 		for (CatalogProduct product : products) {
 			for (CatalogRatePlan catalogRatePlan : product.getRatePlans()) {
-				Vector<CatalogCharge> charges = getAllCharges(catalogRatePlan);
+				ArrayList<CatalogCharge> charges = getAllCharges(catalogRatePlan);
 				
 				boolean quantifiable = false;
 				String uom = null;
@@ -85,8 +85,10 @@ public class CatalogHelper {
 		catalogGroup.setProducts(products);
 		catalogGroup.setName("");
 
-		// Add this catalog group to the vector
+		// Add this catalog group to the ArrayList
 		CatalogHelper.catalogGroups.add(catalogGroup);
+		
+		return catalogGroups;
 	}
 
 	public List<CatalogGroup> getCatalogGroups() {
@@ -97,7 +99,7 @@ public class CatalogHelper {
 	}
 
 	/** Display catalogGroup object in the console. */
-	public void printProducts(Vector<CatalogProduct> products) {
+	public void printProducts(ArrayList<CatalogProduct> products) {
 		for (CatalogProduct p : products) {
 			System.out.println(p.getName() + " -> " + p.getDescription());
 			for (CatalogRatePlan rp : p.getRatePlans()) {
@@ -130,8 +132,8 @@ public class CatalogHelper {
 		return ratePlan;
 	}
 	
-	private Vector<CatalogProduct> getAllProducts() {
-		Vector<CatalogProduct> products = new Vector<CatalogProduct>();
+	private ArrayList<CatalogProduct> getAllProducts() {
+		ArrayList<CatalogProduct> products = new ArrayList<CatalogProduct>();
 
 		QueryResult productResult = null;
 		try {
@@ -159,8 +161,8 @@ public class CatalogHelper {
 		return products;
 	}
 
-	private Vector<CatalogRatePlan> getAllRatePlans(CatalogProduct product) {
-		Vector<CatalogRatePlan> ratePlans = new Vector<CatalogRatePlan>();
+	private ArrayList<CatalogRatePlan> getAllRatePlans(CatalogProduct product) {
+		ArrayList<CatalogRatePlan> ratePlans = new ArrayList<CatalogRatePlan>();
 
 		try {
 			QueryResult productResult = null;
@@ -173,7 +175,7 @@ public class CatalogHelper {
 
 			QueryResult prpResult = null;
 			try {
-				productResult = zapi.zQuery("Select Id, Name, Description from ProductRatePlan where ProductId='"
+				prpResult = zapi.zQuery("Select Id, Name, Description from ProductRatePlan where ProductId='"
 						+ product.getId()
 						+ "' and EffectiveStartDate < '"
 						+ today
@@ -192,7 +194,7 @@ public class CatalogHelper {
 				rp.setDescription(prp.getDescription());
 				rp.setQuantifiable(new Boolean(false));
 
-				// add to vector
+				// add to ArrayList
 				ratePlans.add(rp);
 			}
 		} catch (Exception e) {
@@ -202,8 +204,8 @@ public class CatalogHelper {
 		return ratePlans;
 	}
 
-	private Vector<CatalogCharge> getAllCharges(CatalogRatePlan catalogRatePlan) {
-		Vector<CatalogCharge> charges = new Vector<CatalogCharge>();
+	private ArrayList<CatalogCharge> getAllCharges(CatalogRatePlan catalogRatePlan) {
+		ArrayList<CatalogCharge> charges = new ArrayList<CatalogCharge>();
 
 		try {
 			QueryResult chargesResult = null;

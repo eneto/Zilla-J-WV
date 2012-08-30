@@ -12,6 +12,8 @@ import java.util.GregorianCalendar;
 import java.util.Properties;
 import java.util.TimeZone;
 
+import org.apache.commons.codec.binary.Base64;
+
 import com.zuora.api.*;
 import com.zuora.api.object.*;
 
@@ -109,7 +111,18 @@ public class ZuoraUtility {
 		calendar.setTimeZone(tz);
 		return calendar.get(Calendar.DAY_OF_MONTH);
 	}
-
+	
+	/**
+	 * Decode base64.
+	 * 
+	 * @param strBody
+	 *            the String body
+	 * @return the byte[]
+	 */
+	public static byte[] decodeBase64(String strBody) {
+		return Base64.decodeBase64(strBody.getBytes());
+	}
+	
 	/**
 	 * Write file.
 	 * 

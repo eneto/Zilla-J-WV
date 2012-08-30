@@ -1,5 +1,6 @@
 package com.zuora.zilla.model;
 
+import java.util.ArrayList;
 import java.util.Vector;
 
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -12,7 +13,7 @@ public class CatalogRatePlan {
 	private String description = "";
 	private Boolean quantifiable;
 	private String uom = "";
-	private Vector<CatalogCharge> charges;
+	private ArrayList<CatalogCharge> charges;
 
 	@JsonProperty("Id")
 	public String getId() {
@@ -69,11 +70,11 @@ public class CatalogRatePlan {
 	}
 
 	@JsonProperty("charges")
-	public Vector<CatalogCharge> getCharges() {
+	public ArrayList<CatalogCharge> getCharges() {
 		return charges;
 	}
 
-	public void setCharges(Vector<CatalogCharge> charges) {
+	public void setCharges(ArrayList<CatalogCharge> charges) {
 		this.charges = charges;
 	}
 }

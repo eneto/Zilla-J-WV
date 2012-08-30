@@ -87,7 +87,7 @@ public class Amender {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			Vector<CatalogCharge> charges = catalog.getRatePlan(prpId).getCharges();
+			ArrayList<CatalogCharge> charges = catalog.getRatePlan(prpId).getCharges();
 			for(CatalogCharge charge : charges){
 				if (charge.getChargeModel() == "Per Unit Pricing" || charge.getChargeModel() == "Tiered Pricing" || charge.getChargeModel() == "Volume Pricing") {
 					RatePlanCharge rpc = new RatePlanCharge();
