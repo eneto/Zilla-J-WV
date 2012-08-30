@@ -1,41 +1,26 @@
 package com.zuora.zilla.controller;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import com.zuora.api.*;
+import com.zuora.api.object.*;
 import com.zuora.zilla.util.*;
-
-import edu.emory.mathcs.backport.java.util.Arrays;
 
 public class InvoiceManager {
 	
-	/** The Stub to query from Zuora. */
-	private ZuoraServiceStub stub;
-
-	/** To retrieve the current authentication to use the API. */
-	private SessionHeader header;
-
-	/** Wrapper to query the API in an elegant form. */
-	private ZuoraAPIHelper helper;
+	/** The Zuora API instance used to handle soap calls. */
+	private ZApi zapi;
 	
-	/** Public constructor, set up using the current stub and header. */
-	public InvoiceManager() {
+	public InvoiceManager() throws Exception {
 		// get the stub and the helper
 		try {
-			this.stub = new ZuoraServiceStub();
-			this.helper = new ZuoraAPIHelper();
-		} catch (AxisFault e1) {
-			e1.printStackTrace();
-		}
-		// generate header (user log in)
-		try {
-			helper.login();
+			zapi = new ZApi();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new Exception("Invalid Login");
 		}
-		this.header = helper.getHeader();
 	}
 	
 	/**
@@ -48,61 +33,50 @@ public class InvoiceManager {
 	 */
 	public String getLastInvoicePdf(String accountName) {
 		
-		// Get contact with this email
+		// Step #1: get the associated account Id
 		String accountId = null;
-		
-		Query accountQuery = new Query();
-		accountQuery.setQueryString("SELECT Id FROM Account WHERE Name='" + accountName + "'");
-		
+
 		try {
-			QueryResult result = this.stub.query(accountQuery, header).getResult();
-			Account acc = (Account) result.getRecords()[0];
-			accountId = acc.getId().getID();
-			
+			QueryResult qresAcc = zapi.zQuery("SELECT Id FROM Account WHERE Name='" + accountName + "'");
+			accountId = qresAcc.getRecords()[0].getId();
 		} catch (Exception e) {
 			e.printStackTrace();
-			return null;
 		}
 		
-		// Get all invoices with this Account ID
-		Query invoiceQuery = new Query();
-		invoiceQuery.setQueryString("SELECT Id,CreatedDate FROM Invoice WHERE AccountId='" + accountId + "'");
-		List<Invoice> listInvoices = new ArrayList<Invoice>();
+		if (accountId == null)
+			return null; // ACCOUNT_DOES_NOT_EXIST
+
 		
+		// Get all invoices with this Account ID
+		QueryResult qresInvs = null;
 		try {
-			QueryResult result = this.stub.query(invoiceQuery, header).getResult();
-			for (ZObject z1 : result.getRecords()) {
-				Invoice invoice = (Invoice) z1;
-				listInvoices.add(invoice);
-			}
-			
+			qresInvs = zapi.zQuery("SELECT Id,CreatedDate FROM Invoice WHERE AccountId='" + accountId + "'");
 		} catch (Exception e) {
 			e.printStackTrace();
-			return null;
+		}
+		List<Invoice> listInvoices = new ArrayList<Invoice>();
+		
+		for (ZObject z1 : qresInvs.getRecords()) {
+			Invoice invoice = (Invoice) z1;
+			listInvoices.add(invoice);
 		}
 		
 		if (listInvoices.size() > 0) {
 			// Sort invoices by invoice date
-			Invoice[] invoices = (Invoice[]) listInvoices.toArray(new Invoice[listInvoices.size()]);
-			Arrays.sort(invoices, new CmpInvoices());
+			Collections.sort(listInvoices, new CmpInvoices());
+
+			Invoice[] invoices = (Invoice[]) listInvoices.toArray();
 			
 			// Use the first invoice and return the body
-			Query bodyQuery = new Query();
-			bodyQuery.setQueryString("SELECT Body FROM Invoice WHERE Id='" + invoices[0].getId().getID() + "'");
-			
 			try {
-				QueryResult result = this.stub.query(bodyQuery, header).getResult();
-				Invoice i = (Invoice) result.getRecords()[0];
+				QueryResult qresLastInv = zapi.zQuery("SELECT Body FROM Invoice WHERE Id='" + invoices[0].getId() + "'");
+				Invoice i = (Invoice) qresLastInv.getRecords()[0];
 				return i.getBody();
-				
 			} catch (Exception e) {
 				e.printStackTrace();
-				return null;
 			}
-			
-		} else {
-			return null;
 		}
+		return null;
 	}
 	
 	/**

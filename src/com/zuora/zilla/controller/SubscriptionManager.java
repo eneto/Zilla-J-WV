@@ -284,9 +284,13 @@ public class SubscriptionManager {
 		
 		Map<String, Object> data = new HashMap<String, Object>();
 		
-		if (!new AccountManager().checkEmailAvailability(userEmail)) {
-			data.put("error", "DUPLICATE_EMAIL");
-			return data;
+		try {
+			if (!new AccountManager().checkEmailAvailability(userEmail)) {
+				data.put("error", "DUPLICATE_EMAIL");
+				return data;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		
 		System.out.println("** Start querying Zuora with PaymentId: " + pmId);

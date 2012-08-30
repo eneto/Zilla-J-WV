@@ -3,6 +3,8 @@ package com.zuora.zilla.controller;
 import java.security.MessageDigest;
 import java.util.Random;
 
+import com.zuora.api.*;
+import com.zuora.api.object.*;
 import com.zuora.zilla.util.*;
 
 /**
@@ -25,33 +27,19 @@ public class PaymentManager {
 	/** The Constant APP_URL. */
 	private static final String APP_URL = "appUrl";
 
-	/** The Stub to query from Zuora. */
-	private ZuoraServiceStub stub;
-
-	/** To retrieve the current authentication to use the API. */
-	private SessionHeader header;
-
-	/** Wrapper to query the API in an elegant form. */
-	private ZuoraAPIHelper helper;
-
-	public PaymentManager() {
+	
+	/** The Zuora API instance used to handle soap calls. */
+	private ZApi zapi;
+	
+	public PaymentManager() throws Exception {
 		// get the stub and the helper
 		try {
-			this.stub = new ZuoraServiceStub();
-			this.helper = new ZuoraAPIHelper();
-		} catch (AxisFault e1) {
-			e1.printStackTrace();
-		}
-		// generate header (user log in)
-		try {
-			helper.login();
+			zapi = new ZApi();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new Exception("Invalid Login");
 		}
-		this.header = helper.getHeader();
 	}
-
+	
 	/**
 	 * Generates a URL for a new subscriber to enter credit card and contact
 	 * information.
@@ -70,9 +58,8 @@ public class PaymentManager {
 	 * 
 	 * @return Existing PaymentMethod URL
 	 */
-	public String getExistingIframeSrc(String email) {
+	public String getExistingIframeSrc(String accountName) {
 		String iframeUrl = null;
-		
 		
 		try {
 			ZApi zapi = new ZApi();
@@ -80,41 +67,47 @@ public class PaymentManager {
 			return e.getMessage();
 		}
 		
-		
-		Query query = new Query();
-		query.setQueryString("SELECT AccountId, Country, Address1, Address2,"
-				+ "City, State, PostalCode, WorkPhone FROM Contact "
-				+ "WHERE WorkEmail = '" + email + "'");
 		Contact contact = null;
+		String accountId = null;
+
+		// Get the contact and account Id for the given account
 		try {
-			QueryResponse resp = stub.query(query, this.header);
-			if (resp != null) {
-				// Get the contact from the query response
-				ZObject[] records = resp.getResult().getRecords();
-				contact = (Contact) records[0];
-				
-				// Get the base url
-				iframeUrl = generateUrl();
-				
-				// Append information from existing customer
-				iframeUrl += "&field_accountId=" + contact.getAccountId();
-				
-				if (contact.getCountry() != null) {
-					if (contact.getCountry().equalsIgnoreCase("united states")) {
-						iframeUrl += "&field_creditCardCountry=USA";
-					} else if (contact.getCountry().equalsIgnoreCase("canada")) {
-						iframeUrl += "&field_creditCardCountry=CAN";
-					}
-				}
-				
-				iframeUrl += (contact.getState() != null) ? "&field_creditCardState=" + contact.getState() : "";
-				iframeUrl += (contact.getCity() != null) ? "&field_creditCardCity=" + contact.getCity() : "";
-				iframeUrl += (contact.getPostalCode() != null) ? "&field_creditCardPostalCode=" + contact.getPostalCode() : "";
-				iframeUrl += (contact.getAddress1() != null) ? "&field_creditCardAddress1=" + contact.getAddress1() : "";
-				iframeUrl += (contact.getAddress2() != null) ? "&field_creditCardAddress2=" + contact.getAddress2() : "";
-				iframeUrl += (contact.getWorkPhone() != null) ? "&field_phone=" + contact.getWorkPhone() : "";
-				iframeUrl += (contact.getWorkEmail() != null) ? "&field_email=" + contact.getWorkEmail() : "";
+			QueryResult qresAcc = zapi.zQuery("SELECT Id FROM Account WHERE Name='" + accountName + "'");
+			if(qresAcc.getSize()==0){
+				return null; // ACCOUNT_DOES_NOT_EXIST
 			}
+			accountId = qresAcc.getRecords()[0].getId();
+
+			QueryResult qresCon = zapi.zQuery("SELECT AccountId, Country, Address1, Address2,"
+					+ "City, State, PostalCode, WorkPhone FROM Contact "
+					+ "WHERE AccountId = '" + accountId + "'");
+			contact = (Contact) qresCon.getRecords()[0];
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		try {
+			// Get the base url
+			iframeUrl = generateUrl();
+			
+			// Append information from existing customer
+			iframeUrl += "&field_accountId=" + contact.getAccountId();
+			
+			if (contact.getCountry() != null) {
+				if (contact.getCountry().equalsIgnoreCase("united states")) {
+					iframeUrl += "&field_creditCardCountry=USA";
+				} else if (contact.getCountry().equalsIgnoreCase("canada")) {
+					iframeUrl += "&field_creditCardCountry=CAN";
+				}
+			}
+			
+			iframeUrl += (contact.getState() != null) ? "&field_creditCardState=" + contact.getState() : "";
+			iframeUrl += (contact.getCity() != null) ? "&field_creditCardCity=" + contact.getCity() : "";
+			iframeUrl += (contact.getPostalCode() != null) ? "&field_creditCardPostalCode=" + contact.getPostalCode() : "";
+			iframeUrl += (contact.getAddress1() != null) ? "&field_creditCardAddress1=" + contact.getAddress1() : "";
+			iframeUrl += (contact.getAddress2() != null) ? "&field_creditCardAddress2=" + contact.getAddress2() : "";
+			iframeUrl += (contact.getWorkPhone() != null) ? "&field_phone=" + contact.getWorkPhone() : "";
+			iframeUrl += (contact.getWorkEmail() != null) ? "&field_email=" + contact.getWorkEmail() : "";
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

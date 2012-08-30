@@ -62,7 +62,12 @@ public class CartHelper {
 		cartItem.setQuantity(quantity);
 
 		// Retrieve the rate plan
-		CatalogRatePlan ratePlan = new CatalogHelper().getRatePlan(ratePlanId);
+		CatalogRatePlan ratePlan = null;
+		try {
+			ratePlan = new CatalogHelper().getRatePlan(ratePlanId);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		cartItem.setUom(ratePlan.getUom());
 		cartItem.setRatePlanName(ratePlan.getName());

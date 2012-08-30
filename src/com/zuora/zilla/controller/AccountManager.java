@@ -4,14 +4,15 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.TimeZone;
 
+import com.zuora.api.*;
+import com.zuora.api.object.*;
 import com.zuora.zilla.model.*;
 import com.zuora.zilla.util.*;
-
-import edu.emory.mathcs.backport.java.util.Arrays;
 
 /**
  * The AccountManager class manages Account information for the logged in user.
@@ -28,31 +29,16 @@ import edu.emory.mathcs.backport.java.util.Arrays;
  */
 public class AccountManager {
 
-	/** The Stub to query from Zuora. */
-	private ZuoraServiceStub stub;
-
-	/** To retrieve the current authentication to use the API. */
-	private SessionHeader header;
-
-	/** Wrapper to query the API in an elegant form. */
-	private ZuoraAPIHelper helper;
-
-	public AccountManager() {
+	/** The Zuora API instance used to handle soap calls. */
+	private ZApi zapi;
+	
+	public AccountManager() throws Exception {
 		// get the stub and the helper
 		try {
-			this.stub = new ZuoraServiceStub();
-			this.helper = new ZuoraAPIHelper();
-		} catch (AxisFault e1) {
-			e1.printStackTrace();
-		}
-		// generate header (user log in)
-		try {
-			helper.login();
+			zapi = new ZApi();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new Exception("Invalid Login");
 		}
-		this.header = helper.getHeader();
 	}
 	
 	public SummaryAccount getAccountDetail(String accountEmail) {
@@ -109,9 +95,8 @@ public class AccountManager {
 						Payment payment = (Payment) z;
 						listPayments.add(payment);
 					}
-					Payment[] payments = (Payment[]) listPayments.toArray(new Payment[listPayments.size()]);
-//					Payment[] payments = (Payment[]) paymentResp.getResult().getRecords();
-					Arrays.sort(payments, new CmpPayments());
+					Collections.sort(listPayments, new CmpPayments());
+					Payment[] payments = (Payment[]) listPayments.toArray();
 					// TODO check this has been really sorted..
 					summary.setLastPaymentAmount(payments[0].getAmount().toPlainString());
 					// Set TimeZone
