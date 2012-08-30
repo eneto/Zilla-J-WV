@@ -1,4 +1,4 @@
-package com.zuora.api.controller;
+package com.zuora.zilla.controller;
 
 import java.math.BigDecimal;
 import java.rmi.RemoteException;
@@ -11,37 +11,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-import org.apache.axis2.AxisFault;
+import com.zuora.api.*;
+import com.zuora.api.object.*;
 
-import com.zuora.api.axis2.UnexpectedErrorFault;
-import com.zuora.api.axis2.ZuoraServiceStub;
-import com.zuora.api.axis2.ZuoraServiceStub.Account;
-import com.zuora.api.axis2.ZuoraServiceStub.Amendment;
-import com.zuora.api.axis2.ZuoraServiceStub.Contact;
-import com.zuora.api.axis2.ZuoraServiceStub.ID;
-import com.zuora.api.axis2.ZuoraServiceStub.PaymentMethod;
-import com.zuora.api.axis2.ZuoraServiceStub.PreviewOptions;
-import com.zuora.api.axis2.ZuoraServiceStub.Product;
-import com.zuora.api.axis2.ZuoraServiceStub.ProductRatePlan;
-import com.zuora.api.axis2.ZuoraServiceStub.Query;
-import com.zuora.api.axis2.ZuoraServiceStub.QueryResponse;
-import com.zuora.api.axis2.ZuoraServiceStub.QueryResult;
-import com.zuora.api.axis2.ZuoraServiceStub.RatePlan;
-import com.zuora.api.axis2.ZuoraServiceStub.RatePlanCharge;
-import com.zuora.api.axis2.ZuoraServiceStub.RatePlanData;
-import com.zuora.api.axis2.ZuoraServiceStub.SessionHeader;
-import com.zuora.api.axis2.ZuoraServiceStub.Subscribe;
-import com.zuora.api.axis2.ZuoraServiceStub.SubscribeOptions;
-import com.zuora.api.axis2.ZuoraServiceStub.SubscribeRequest;
-import com.zuora.api.axis2.ZuoraServiceStub.SubscribeResponse;
-import com.zuora.api.axis2.ZuoraServiceStub.SubscribeResult;
-import com.zuora.api.axis2.ZuoraServiceStub.Subscription;
-import com.zuora.api.axis2.ZuoraServiceStub.SubscriptionData;
-import com.zuora.api.axis2.ZuoraServiceStub.ZObject;
-import com.zuora.api.model.AmenderSubscription;
-import com.zuora.api.test.AccountSample;
-import com.zuora.api.util.ZuoraAPIHelper;
-import com.zuora.api.util.ZuoraUtility;
+import com.zuora.zilla.model.*;
+import com.zuora.zilla.util.*;
 
 /**
  * This manager allows the user to create and/or preview a subscription (this
@@ -52,32 +26,16 @@ import com.zuora.api.util.ZuoraUtility;
  */
 public class SubscriptionManager {
 
-	/** The Stub to query from Zuora. */
-	private ZuoraServiceStub stub;
-
-	/** To retrieve the current authentication to use the API. */
-	private SessionHeader header;
-
-	/** Wrapper to query the API in an elegant form. */
-	private ZuoraAPIHelper helper;
-
-	/** Public constructor, set up using the current stub and header. */
-	public SubscriptionManager() {
+	/** The Zuora API instance used to handle soap calls. */
+	private ZApi zapi;
+	
+	public SubscriptionManager() throws Exception {
 		// get the stub and the helper
 		try {
-			this.stub = new ZuoraServiceStub();
-			this.helper = new ZuoraAPIHelper();
-		} catch (AxisFault e1) {
-			e1.printStackTrace();
-		}
-		// generate header (user log in)
-		try {
-			helper.login();
+			zapi = new ZApi();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new Exception("Invalid Login");
 		}
-		this.header = helper.getHeader();
 	}
 
 	/**
@@ -88,22 +46,12 @@ public class SubscriptionManager {
 	 * @return Active Subscription details
 	 */
 	public AmenderSubscription getCurrentSubscription(String accountName) {
-		// Step #1: from email, get the associated account Id
-
-		Query accountQuery = new Query();
-		accountQuery.setQueryString("SELECT Id FROM Account WHERE Name='" + accountName + "'");
+		// Step #1: get the associated account Id
 		String accountId = null;
 
-/*
-		Query accountQuery = new Query();
-		accountQuery.setQueryString("SELECT AccountId FROM Contact WHERE WorkEmail='" + email + "'");
-		String accountId = null;
-*/
-		
 		try {
-			QueryResponse resp = stub.query(accountQuery, this.header);
-			ID accountID = resp.getResult().getRecords()[0].getId();
-			accountId = accountID.getID();
+			QueryResult qresAcc = zapi.zQuery("SELECT Id FROM Account WHERE Name='" + accountName + "'");
+			accountId = qresAcc.getRecords()[0].getId();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -114,21 +62,23 @@ public class SubscriptionManager {
 		// Get Active Subscription
 		AmenderSubscription activeSubscription = new AmenderSubscription();
 		
-		Query subscriptionQuery = new Query();
-		subscriptionQuery.setQueryString("SELECT Id,Name,Status,Version,PreviousSubscriptionId,"
-				+ "ContractEffectiveDate,TermStartDate FROM Subscription WHERE AccountId='"
-				+ accountId + "' AND Status='Active'");
+		QueryResult qresLastSub = null;
+		try {
+			qresLastSub = zapi.zQuery("SELECT Id,Name,Status,Version,PreviousSubscriptionId,"
+					+ "ContractEffectiveDate,TermStartDate FROM Subscription WHERE AccountId='"
+					+ accountId + "' AND Status='Active'");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		
 		try {
-			QueryResult result = stub.query(subscriptionQuery, this.header).getResult();
-			
-			if (result.getSize() == 0)
+			if (qresLastSub.getSize() == 0)
 				return null; // SUBSCRIPTION_DOES_NOT_EXIST
 			
-			Subscription subscription = (Subscription) result.getRecords()[0];
+			Subscription subscription = (Subscription) qresLastSub.getRecords()[0];
 			
 			activeSubscription.setUserEmail(accountName);
-			activeSubscription.setSubscriptionId(subscription.getId().getID());
+			activeSubscription.setSubscriptionId(subscription.getId());
 			activeSubscription.setVersion(subscription.getVersion());
 			
 			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
@@ -142,9 +92,12 @@ public class SubscriptionManager {
 			List<AmenderPlan> removedPlans = new ArrayList<AmenderPlan>();
 			
 			// Get active rate plan 
-			Query activeQuery = new Query();
-			activeQuery.setQueryString("SELECT Id,Name,ProductRatePlanId FROM RatePlan WHERE SubscriptionId='" + activeSubscription.getSubscriptionId() + "'");
-			QueryResult activeResult = this.stub.query(activeQuery, header).getResult();
+			QueryResult activeResult = null;
+			try {
+				activeResult = zapi.zQuery("SELECT Id,Name,ProductRatePlanId FROM RatePlan WHERE SubscriptionId='" + activeSubscription.getSubscriptionId() + "'");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			
 			// Loop through all the rate plan
 			for (ZObject zObj : activeResult.getRecords()) {
@@ -153,35 +106,44 @@ public class SubscriptionManager {
 				
 				AmenderPlan newPlan = new AmenderPlan();
 				
-				newPlan.setId(rp.getId().getID());
+				newPlan.setId(rp.getId());
 				newPlan.setName(rp.getName());
 				
 				// Get product name
-				Query prpQuery = new Query();
-				prpQuery.setQueryString("SELECT Description,ProductId FROM ProductRatePlan WHERE Id='" + rp.getProductRatePlanId().getID() + "'");
-				ProductRatePlan prp = (ProductRatePlan) this.stub.query(prpQuery, header).getResult().getRecords()[0];
-				newPlan.setDescription((prp.getDescription() != null) ? prp.getDescription() : "");
-				
-				Query productQuery = new Query();
-				productQuery.setQueryString("SELECT Name FROM Product WHERE Id ='" + prp.getProductId().getID() + "'");
-				Product product = (Product) this.stub.query(productQuery, header).getResult().getRecords()[0];
-				newPlan.setProductName(product.getName());
+				try {
+					QueryResult productRatePlanResult = zapi.zQuery("SELECT Description,ProductId FROM ProductRatePlan WHERE Id='" + rp.getProductRatePlanId() + "'");
+					ProductRatePlan curPrp = (ProductRatePlan) productRatePlanResult.getRecords()[0];
+					
+					QueryResult productResult = zapi.zQuery("SELECT Id,Name FROM Product WHERE Id='" + curPrp.getProductId() + "'");
+					Product curProd = (Product) productResult.getRecords()[0];
+
+					newPlan.setDescription((curPrp.getDescription() != null) ? curPrp.getDescription() : "");
+					newPlan.setProductName(curProd.getName());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 				
 				// Get all charges
 				List<AmenderCharge> charges = new ArrayList<AmenderCharge>();
-				Query chargesQuery = new Query();
-				chargesQuery.setQueryString("SELECT Id,Name,ProductRatePlanChargeId,ChargeModel,ChargeType,UOM,Quantity,ChargedThroughDate FROM RatePlanCharge WHERE RatePlanId='" + rp.getId().getID() + "'");
-				QueryResult chargesResult = this.stub.query(chargesQuery, header).getResult();
+
+				QueryResult chargesResult = null;
+				try {
+					chargesResult = zapi.zQuery("SELECT Id,Name,ProductRatePlanChargeId,ChargeModel,ChargeType,UOM,Quantity,ChargedThroughDate " +
+							"FROM RatePlanCharge WHERE RatePlanId='" + rp.getId() + "'");
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 				for (ZObject z2 : chargesResult.getRecords()) {
 					RatePlanCharge rpc = (RatePlanCharge) z2;
 					AmenderCharge newCharge = new AmenderCharge();
 					
-					newCharge.setId(rpc.getId().getID());
+					newCharge.setId(rpc.getId());
 					newCharge.setName(rpc.getName());
 					newCharge.setChargeModel(rpc.getChargeModel());
-					newCharge.setProductRatePlanChargeId(rpc.getProductRatePlanChargeId().getID());
+					newCharge.setProductRatePlanChargeId(rpc.getProductRatePlanChargeId());
 					
 					if (!rpc.getChargeModel().equals("Flat Fee Pricing")) {
+						// TODO Also exlude usage charges
 						newPlan.setUom(rpc.getUOM());
 						newPlan.setQuantity(rpc.getQuantity().toPlainString());
 						newCharge.setUom(rpc.getUOM());
@@ -204,9 +166,14 @@ public class SubscriptionManager {
 			}
 			
 			// Get removed rate plan
-			Query removedPlanQuery = new Query();
-			removedPlanQuery.setQueryString("SELECT Id,Name,AmendmentType,AmendmentId,ProductRatePlanId FROM RatePlan WHERE SubscriptionId='" + activeSubscription.getSubscriptionId() + "' AND AmendmentType='RemoveProduct'");
-			QueryResult removedPlanResult = this.stub.query(removedPlanQuery, header).getResult();
+			// Get active rate plan 
+			QueryResult removedPlanResult = null;
+			try {
+				removedPlanResult = zapi.zQuery("SELECT Id,Name,AmendmentType,AmendmentId,ProductRatePlanId FROM RatePlan " +
+						"WHERE SubscriptionId='" + activeSubscription.getSubscriptionId() + "' AND AmendmentType='RemoveProduct'");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			for (ZObject z3 : removedPlanResult.getRecords()) {
 				// Cast
 				RatePlan rp = (RatePlan) z3;
@@ -217,45 +184,56 @@ public class SubscriptionManager {
 				
 				AmenderPlan newPlan = new AmenderPlan();
 				
-				newPlan.setId(rp.getId().getID());
+				newPlan.setId(rp.getId());
 				newPlan.setName(rp.getName());
 				
 				// Get product name
-				Query prpQuery = new Query();
-				prpQuery.setQueryString("SELECT Description,ProductId FROM ProductRatePlan WHERE Id='" + rp.getProductRatePlanId().getID() + "'");
-				ProductRatePlan prp = (ProductRatePlan) this.stub.query(prpQuery, header).getResult().getRecords()[0];
-				newPlan.setDescription((prp.getDescription() != null) ? prp.getDescription() : "");
+				try {
+					QueryResult productRatePlanResult = zapi.zQuery("SELECT Description,ProductId FROM ProductRatePlan WHERE Id='" + rp.getProductRatePlanId() + "'");
+					ProductRatePlan curPrp = (ProductRatePlan) productRatePlanResult.getRecords()[0];
+					
+					QueryResult productResult = zapi.zQuery("SELECT Description,ProductId FROM Product WHERE Id='" + curPrp.getProductId() + "'");
+					Product curProd = (Product) productResult.getRecords()[0];
+
+					newPlan.setDescription((curPrp.getDescription() != null) ? curPrp.getDescription() : "");
+					newPlan.setProductName(curProd.getName());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 				
-				Query productQuery = new Query();
-				productQuery.setQueryString("SELECT Name FROM Product WHERE Id ='" + prp.getProductId().getID() + "'");
-				Product product = (Product) this.stub.query(productQuery, header).getResult().getRecords()[0];
-				newPlan.setProductName(product.getName());
-				
-				newPlan.setAmendmentId(rp.getAmendmentId().getID());
+				newPlan.setAmendmentId(rp.getAmendmentId());
 				newPlan.setAmendmentType(rp.getAmendmentType());
 				newPlan.setEffectiveDate("end of current billing period.");
 				
 				// Query amendment for this rate plan to get Effective Removal Date
-				Query amdQuery = new Query();
-				amdQuery.setQueryString("SELECT Id,ContractEffectiveDate FROM Amendment WHERE Id='" + newPlan.getAmendmentId() + "'");
-				Amendment amd = (Amendment) this.stub.query(amdQuery, header).getResult().getRecords()[0];
-				newPlan.setEffectiveDate(dateFormat.format(amd.getContractEffectiveDate().getTime()));
+				try {
+					QueryResult amdResult = zapi.zQuery("SELECT Id,ContractEffectiveDate FROM Amendment WHERE Id='" + newPlan.getAmendmentId() + "'");
+					Amendment amd = (Amendment) amdResult.getRecords()[0];
+					newPlan.setEffectiveDate(dateFormat.format(amd.getContractEffectiveDate().getTime()));
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 				
 				// Get all charges
 				List<AmenderCharge> charges = new ArrayList<AmenderCharge>();
-				Query chargesQuery = new Query();
-				chargesQuery.setQueryString("SELECT Id,Name,ProductRatePlanChargeId,ChargeModel,ChargeType,UOM,Quantity,ChargedThroughDate FROM RatePlanCharge WHERE RatePlanId='" + rp.getId().getID() + "'");
-				QueryResult chargesResult = this.stub.query(chargesQuery, header).getResult();
+				QueryResult chargesResult = null;
+				try {
+					chargesResult = zapi.zQuery("SELECT Id,Name,ProductRatePlanChargeId,ChargeModel,ChargeType,UOM,Quantity,ChargedThroughDate " +
+							"FROM RatePlanCharge WHERE RatePlanId='" + rp.getId() + "'");
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 				for (ZObject z2 : chargesResult.getRecords()) {
 					RatePlanCharge rpc = (RatePlanCharge) z2;
 					AmenderCharge newCharge = new AmenderCharge();
 					
-					newCharge.setId(rpc.getId().getID());
+					newCharge.setId(rpc.getId());
 					newCharge.setName(rpc.getName());
 					newCharge.setChargeModel(rpc.getChargeModel());
-					newCharge.setProductRatePlanChargeId(rpc.getProductRatePlanChargeId().getID());
+					newCharge.setProductRatePlanChargeId(rpc.getProductRatePlanChargeId());
 					
 					if (!rpc.getChargeModel().equals("Flat Fee Pricing")) {
+						// TODO Also exclude usage charges
 						newPlan.setUom(rpc.getUOM());
 						newPlan.setQuantity(rpc.getQuantity().toPlainString());
 						newCharge.setUom(rpc.getUOM());
@@ -314,18 +292,15 @@ public class SubscriptionManager {
 		System.out.println("** Start querying Zuora with PaymentId: " + pmId);
 		
 		// Get Contact Information from newly created user
-		Query pmQuery = new Query();
-		pmQuery.setQueryString("SELECT CreditCardAddress1,CreditCardAddress2,"
-				+ "CreditCardCity,CreditCardCountry,CreditCardHolderName,"
-				+ "CreditCardPostalCode,CreditCardState,Phone FROM PaymentMethod"
-				+ " WHERE Id='" + pmId + "'");
-		
 		QueryResult pmResult = null;
 		try {
-			pmResult = this.stub.query(pmQuery, this.header).getResult();
+			pmResult = zapi.zQuery("SELECT CreditCardAddress1,CreditCardAddress2,"
+					+ "CreditCardCity,CreditCardCountry,CreditCardHolderName,"
+					+ "CreditCardPostalCode,CreditCardState,Phone FROM PaymentMethod"
+					+ " WHERE Id='" + pmId + "'");
 		} catch (Exception e) {
 			e.printStackTrace();
-		} 
+		}
 		
 		if (pmResult == null || pmResult.getSize() == 0) {
 			data.put("error", "INVALID_PMID");
@@ -423,41 +398,13 @@ public class SubscriptionManager {
 		subscribes[0] = subReq;
 
 		// Do the subscription with Zuora API
-		Subscribe subscribe = new Subscribe();
-		subscribe.setSubscribes(subscribes);
-		SubscribeResponse resp = null;
-		
-		try {
-			resp = stub.subscribe(subscribe, this.header);
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (UnexpectedErrorFault e) {
-			// TODO Auto-generated catch block
+		SubscribeResult[] resp = null;
+		try{
+			resp = zapi.zSubscribe(subscribes);
+		} catch (Exception e){
 			e.printStackTrace();
 		}
-
-//		if (resp != null && resp.getResult()[0].getSuccess()) {
-//			return userEmail;
-//		}
 		
-		if (resp != null) {
-			System.out.println("** Stub response is NOT null!");
-			if (resp.getResult()[0].getSuccess()) {
-				data.put("success", resp);
-				data.put("userEmail", userEmail);
-				return data;
-			} else {
-				for (com.zuora.api.axis2.ZuoraServiceStub.Error err : resp.getResult()[0].getErrors()) {
-					System.out.println("*** " + err.getField() + " -> " + err.getMessage());
-					System.out.println("*** " + err.toString());
-				}
-			}
-		} else {
-			System.out.println("** The stub response is null..");
-		}
-		
-		data.put("error", "A_PROBLEM_OCCURED");
 		return data;
 	}
 
@@ -469,14 +416,12 @@ public class SubscriptionManager {
 	 * @throws UnexpectedErrorFault
 	 * @throws RemoteException
 	 */
-	public BigDecimal previewCurrentCart(CartHelper cartHelper)
-			throws RemoteException, UnexpectedErrorFault {
+	public BigDecimal previewCurrentCart(CartHelper cartHelper) {
 		// Get the data from the sample (in order to preview from a 'fake'
 		// account)
 		Account account = AccountSample.makeAccount();
 		Contact billingContact = AccountSample.makeContact();
-		SubscribeOptions subscribeOptions = AccountSample
-				.makeSubscriptionOptions();
+		SubscribeOptions subscribeOptions = AccountSample.makeSubscriptionOptions();
 		PreviewOptions previewOptions = AccountSample.makePreviewOptions();
 
 		// Set up subscription
@@ -496,12 +441,15 @@ public class SubscriptionManager {
 		SubscribeRequest[] subscribes = new SubscribeRequest[1];
 		subscribes[0] = subReq;
 
-		Subscribe subscribe = new Subscribe();
-		subscribe.setSubscribes(subscribes);
-		SubscribeResponse resp = stub.subscribe(subscribe, this.header);
-		SubscribeResult result = resp.getResult()[0];
-		if (result.getErrors() == null) {
-			return result.getInvoiceData()[0].getInvoice()
+		// Do the subscription with Zuora API
+		SubscribeResult[] resp = null;
+		try{
+			resp = zapi.zSubscribe(subscribes);
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+		if (resp[0].getErrors() == null) {
+			return resp[0].getInvoiceData()[0].getInvoice()
 					.getAmountWithoutTax();
 		}
 		return null;
@@ -530,10 +478,10 @@ public class SubscriptionManager {
 	 *            the current cart (from HttpSession and the web client)
 	 * @return RatePlanData for subscribe
 	 */
-	private static SubscriptionData getSubscriptionDataRatePlanFromCart(
-			CartHelper cartHelper) {
+	private static SubscriptionData getSubscriptionDataRatePlanFromCart( CartHelper cartHelper) {
 		// Create the return object
 		SubscriptionData subscriptionData = new SubscriptionData();
+		ArrayList<RatePlanData> rpds = new ArrayList<RatePlanData>();
 
 		// Loop for each item in the current cart
 		for (CartItem cartItem : cartHelper.getCartItems()) {
@@ -546,19 +494,19 @@ public class SubscriptionManager {
 			ratePlanData.setRatePlan(ratePlan);
 
 			// Get the ID of the current product rate plan
-			ID productRatePlanId = new ID();
-			productRatePlanId.setID(cartItem.getRatePlanId());
+			String productRatePlanId =  cartItem.getRatePlanId();
 			ratePlan.setProductRatePlanId(productRatePlanId);
 
 			// If there is price per quantity defined
-			// if (cartItem.getQuantity() != null && cartItem.getQuantity() !=
-			// 1) {
-			// TODO
+			// if (cartItem.getQuantity() != null && cartItem.getQuantity() !=1) {
+			// 		TODO
 			// }
 
 			// Add it to the current subscription data
-			subscriptionData.addRatePlanData(ratePlanData);
+			
+			rpds.add(ratePlanData);
 		}
+		subscriptionData.setRatePlanData((RatePlanData[]) rpds.toArray());
 		return subscriptionData;
 	}
 }
