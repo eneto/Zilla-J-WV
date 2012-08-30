@@ -1,4 +1,4 @@
-package com.zuora.api.util;
+package com.zuora.zilla.util;
 
 import java.text.DateFormat;
 import java.util.Calendar;

@@ -1,4 +1,4 @@
-package com.zuora.api.test;
+package com.zuora.zilla.test;
 
 import java.rmi.RemoteException;
 import java.util.Calendar;
@@ -7,7 +7,7 @@ import java.util.Calendar;
 import com.zuora.api.*;
 import com.zuora.api.fault.*;
 import com.zuora.api.object.*;
-import com.zuora.api.util.ZApi;
+import com.zuora.zilla.util.ZApi;
 
 import junit.framework.*;
 
