@@ -236,7 +236,8 @@ public class AmenderTest extends TestCase {
 			Amender amender = new Amender();	
 			
 			//Test Preview Add Amendment
-			AmenderResult amenderRes1 = amender.addRatePlan("JTest AmenderAccount", prp.getId(), 1, true);
+			BigDecimal qty = null;
+			AmenderResult amenderRes1 = amender.addRatePlan("JTest AmenderAccount", prp.getId(), qty, true);
 			if(!amenderRes1.isSuccess()){
 				System.out.println(amenderRes1.getError());
 			}
@@ -244,7 +245,7 @@ public class AmenderTest extends TestCase {
 			System.out.println("Preview Amount: " + amenderRes1.getInvoiceAmount());
 
 			//Test Preview Add Amendment
-			AmenderResult amenderRes2 = amender.addRatePlan("JTest AmenderAccount", prp.getId(), 1, false);
+			AmenderResult amenderRes2 = amender.addRatePlan("JTest AmenderAccount", prp.getId(), qty, false);
 			if(!amenderRes2.isSuccess()){
 				System.out.println(amenderRes2.getError());
 			}

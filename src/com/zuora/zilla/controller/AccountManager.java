@@ -1,18 +1,11 @@
 package com.zuora.zilla.controller;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
-import java.util.TimeZone;
-
 import com.zuora.api.*;
 import com.zuora.api.object.*;
-import com.zuora.zilla.controller.*;
 import com.zuora.zilla.model.*;
 import com.zuora.zilla.util.*;
 
@@ -155,115 +148,47 @@ public class AccountManager {
 
 	}
 	
-	/**
-	 * Get payment information from the account associated with this email address
-	 * @param email User's work email
-	 * @return Payment methods list
-	 */
-	public List<PaymentDetail> getPaymentMethodSummary(String email) {
-		// Step #1: retrieve the account ID associated with this email
-		Query accountQuery = new Query();
-		accountQuery.setQueryString("SELECT AccountId FROM Contact WHERE WorkEmail='" + email + "'");
-		String accountId = null;
-		try {
-			QueryResponse accountResponse = stub.query(accountQuery, this.header);
-			Contact c = (Contact) accountResponse.getResult().getRecords()[0];
-			accountId = c.getAccountId().getID();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		// Account does not exist!
-		if (accountId == null) {
-			return null;
-		}
-		
-		// Get default payment method id for this account
-		String defaultPaymentMethodId = null;
-		Query defaultPmQuery = new Query();
-		defaultPmQuery.setQueryString("SELECT DefaultPaymentMethodId FROM Account WHERE Id='" + accountId + "'");
-		try {
-			QueryResponse resp = stub.query(defaultPmQuery, this.header);
-			Account acc = (Account) resp.getResult().getRecords()[0];
-			System.out.println(accountId);
-			defaultPaymentMethodId = acc.getDefaultPaymentMethodId().getID();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		// Payment method doesn't exist
-		if (defaultPaymentMethodId == null) {
-			return null;
-		}
-		
-		// Prepare the list of payment detail
-		List<PaymentDetail> details = new ArrayList<PaymentDetail>();
-		
-		// Get payment methods with this account id
-		Query paymentsQuery = new Query();
-		paymentsQuery.setQueryString("SELECT Id,CreditCardHolderName,CreditCardMaskNumber,"
-					+ "CreditCardExpirationYear,CreditCardExpirationMonth,CreditCardType "
-					+ "from PaymentMethod WHERE AccountId='" + accountId + "'");
-		try {
-			QueryResponse resp = stub.query(paymentsQuery, this.header);
-			for (ZObject z : resp.getResult().getRecords()) {
-				PaymentMethod pm = (PaymentMethod) z;
-				PaymentDetail d = new PaymentDetail();
-				d.setId(pm.getId().getID());
-				d.setCardHolderName(pm.getCreditCardHolderName());
-				d.setMaskedNumber(pm.getCreditCardMaskNumber());
-				d.setExpirationYear(pm.getCreditCardExpirationYear());
-				d.setExpirationMonth(pm.getCreditCardExpirationMonth());
-				d.setCardType(pm.getCreditCardType());
-				d.setDefaultCard((pm.getId().getID().equals(defaultPaymentMethodId)));
-				details.add(d);
-			}
- 		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		return details;
-	}
 	
 	/**
 	 * Update the given user's information
 	 * @return the user ID if successful
 	 */
-	public String updateContact(String accountName, SummaryContact updatedContact) {
+	public ResponseUpdateContact updateContact(String accountName, SummaryContact updatedContact) {
+		
+		ResponseUpdateContact contactResult = new ResponseUpdateContact();
 		
 		// Get Account ID with this name
 		String accountId = null;
-		Query accountQuery = new Query();
-		accountQuery.setQueryString("SELECT Id FROM Account WHERE Name='" + accountName + "'");
-		
 		try {
-			QueryResult result = this.stub.query(accountQuery, header).getResult();
-			Account acc = (Account) result.getRecords()[0];
-			accountId = acc.getId().getID();
-			
+			QueryResult qresAcc = zapi.zQuery("SELECT Id FROM Account WHERE Name='" + accountName + "'");
+			if(qresAcc.getSize() == 0){
+				contactResult.setSuccess(false);
+				contactResult.setError("USER_DOESNT_EXIST");
+				return contactResult;
+			}
+			Account acc = (Account) qresAcc.getRecords()[0];
+			accountId = acc.getId();
 		} catch (Exception e) {
 			e.printStackTrace();
-			return null;
 		}
 		
 		// Get the contact ID associated with this account
-		ID contactId = null;
-		Query contactQuery = new Query();
-		contactQuery.setQueryString("SELECT Id FROM Contact WHERE AccountId='" + accountId + "'");
-		
+		Contact contact = null;
 		try {
-			QueryResult result = this.stub.query(contactQuery, header).getResult();
-			Contact contact = (Contact) result.getRecords()[0];
-			contactId = contact.getId();
-			
+			QueryResult qresCon = zapi.zQuery("SELECT Id FROM Contact WHERE AccountId='" + accountId + "'");
+			if(qresCon.getSize() == 0){
+				contactResult.setSuccess(false);
+				contactResult.setError("CONTACT_DOESNT_EXIST");
+				return contactResult;
+			}
+			contact = (Contact) qresCon.getRecords()[0];
 		} catch (Exception e) {
 			e.printStackTrace();
-			return null;
 		}
 		
 		// Create a contact record with this ID and all parameters that were passed in
 		Contact updated = new Contact();
-		updated.setId(contactId);
+		updated.setId(contact.getId());
 		updated.setFirstName(updatedContact.getFirstName());
 		updated.setLastName(updatedContact.getLastName());
 		updated.setCountry(updatedContact.getCountry());
@@ -272,16 +197,20 @@ public class AccountManager {
 		updated.setPostalCode(updatedContact.getPostalCode());
 		updated.setCity(updatedContact.getCity());
 		updated.setState(updatedContact.getState());
-		
-		String returnedId = null;
-		
+
 		try {
-			returnedId = this.helper.update(updated).getID();
+			SaveResult[] uRes = zapi.zUpdate(new ZObject[] { updated });
+			if(uRes[0].getSuccess()){
+				contactResult.setSuccess(true);
+			} else {
+				contactResult.setSuccess(false);
+				contactResult.setError(uRes[0].getErrors()[0].getMessage());
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
-		return returnedId;
+		return contactResult;
 	}
 	
 	/**
@@ -296,23 +225,28 @@ public class AccountManager {
 		
 	}
 
-	public boolean checkEmailAvailability(String targetEmail) {
-		// Prepare the zQuery
-		Query query = new Query();
-		query.setQueryString("SELECT Id FROM Contact WHERE WorkEmail = '"
-				+ targetEmail + "'");
+	public boolean checkEmailAvailability(String targetName) {
+		
+		//Disallow apostrophes in account names
+		if(targetName.contains("'")){
+			return false;
+		}
+		
+		// Find any accounts with this account name'
+		
+		// Get Account ID with this name
+		String accountId = null;
 		try {
-			QueryResponse resp = stub.query(query, this.header);
-			if (resp != null) {
-				if (resp.getResult().getSize() != 0) {
-					return false;
-				}
+			QueryResult qresAcc = zapi.zQuery("SELECT Id FROM Account WHERE Name='" + targetName + "'");
+			if(qresAcc.getSize() == 0){
+				return true;
+			} else {
+				return false;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+			return false;
 		}
-
-		return true;
 	}
 
 }

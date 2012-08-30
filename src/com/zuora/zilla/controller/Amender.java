@@ -1,12 +1,15 @@
 package com.zuora.zilla.controller;
 
+import java.math.BigDecimal;
 import java.security.MessageDigest;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.Random;
 import java.util.TimeZone;
+import java.util.Vector;
 
 import com.zuora.api.*;
 import com.zuora.api.object.*;
@@ -43,7 +46,7 @@ public class Amender {
 	 * @param $preview Flag to determine whether this function will be used to create an amendment, or preview an invoice
 	 * @return Amend Result
 	 */
-	public AmenderResult addRatePlan(String accountName, String prpId, double qty, boolean preview) {
+	public AmenderResult addRatePlan(String accountName, String prpId, BigDecimal qty, boolean preview) {
 
 		SubscriptionManager subManager = null;
 		try {
@@ -75,25 +78,28 @@ public class Amender {
 		rpd.setRatePlan(rp);
 		amendment.setRatePlanData(rpd);
 
-		//TODO: Set up quantities for new rate plans
-		/*
 		//If a quantity has been passed, specify charge data to cover all quantifiable charges on the rate plan being added
-		if ($qty != null) {
-			$ratePlanChargeData = array ();
-			$charges = Catalog :: getRatePlan($prpId)->charges;
-			foreach ($charges as $charge) {
-				if ($charge->ChargeModel == "Per Unit Pricing" || $charge->ChargeModel == "Tiered Pricing" || $charge->ChargeModel == "Volume Pricing") {
-					array_push($ratePlanChargeData, array (
-						"RatePlanCharge" => array (
-							"ProductRatePlanChargeId" => $charge->Id,
-							"Quantity" => $qty
-						)
-					));
+		if (qty != null) {
+			ArrayList<RatePlanChargeData> listRpcd = new ArrayList<RatePlanChargeData>();
+			CatalogHelper catalog = null;
+			try {
+				catalog = new CatalogHelper();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			Vector<CatalogCharge> charges = catalog.getRatePlan(prpId).getCharges();
+			for(CatalogCharge charge : charges){
+				if (charge.getChargeModel() == "Per Unit Pricing" || charge.getChargeModel() == "Tiered Pricing" || charge.getChargeModel() == "Volume Pricing") {
+					RatePlanCharge rpc = new RatePlanCharge();
+					rpc.setProductRatePlanChargeId(charge.getId());
+					rpc.setQuantity(qty);
+					RatePlanChargeData rpcd = new RatePlanChargeData();
+					rpcd.setRatePlanCharge(rpc);
+					listRpcd.add(rpcd);
 				}
 			}
-			$amendment['RatePlanData']['RatePlanChargeData'] = $ratePlanChargeData;
+			rpd.setRatePlanChargeData((RatePlanChargeData[]) listRpcd.toArray());
 		}
-		*/
 
 		AmendOptions ao = new AmendOptions();
 		ao.setGenerateInvoice(true);
@@ -197,8 +203,12 @@ public class Amender {
 				amenderRes.setError(amResp[0].getErrors()[0].getMessage());
 			} else {
 				if(amResp[0].getInvoiceDatas()!=null && amResp[0].getInvoiceDatas()[0].getInvoice()!=null){
-					//TODO: Get amount without tax if tax is enabled; Amount if tax is disabled.
-					amenderRes.setInvoiceAmount((amResp[0].getInvoiceDatas()[0].getInvoice().getAmountWithoutTax()).doubleValue());
+					//Get amount without tax if tax is enabled; Amount if tax is disabled.
+					try{
+						amenderRes.setInvoiceAmount((amResp[0].getInvoiceDatas()[0].getInvoice().getAmountWithoutTax()).doubleValue());
+					} catch (Exception e){
+						amenderRes.setInvoiceAmount((amResp[0].getInvoiceDatas()[0].getInvoice().getAmount()).doubleValue());
+					}
 				}
 			}
 		} catch (Exception e){
