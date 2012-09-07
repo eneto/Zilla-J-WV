@@ -15,26 +15,50 @@ public class CatalogTest extends TestCase {
 		super(name);
 	}
 
-	public void testRefresh() throws Exception {
-		CatalogHelper catalog = null;
-		try{
-			catalog = new CatalogHelper();
-		} catch (Exception e){
-			System.out.println(e.getMessage());
-			fail("Created Catalog");
-		}
-		
+	public void testRefreshCatalog() throws Exception {
 		try {
-			ArrayList<CatalogGroup> groups = catalog.refreshCache();
+			System.out.println("===Catalog Refresh===\n");
+			System.out.print("Refreshing...");
+			ArrayList<CatalogGroup> groups = Catalog.readCatalog();
+			System.out.println("Complete.");
 			for(CatalogGroup g : groups){
 				for(CatalogProduct p : g.getProducts()){
 					System.out.println("Product : " + p.getName());
+					for(CatalogRatePlan rp : p.getRatePlans()){
+						System.out.println("\tProduct Rate Plan : " + rp.getName());
+						for(CatalogCharge c : rp.getCharges()){
+							System.out.println("\t\tProduct Rate Plan Charge : " + c.getName());
+						}
+					}
 				}
 			}
-			
 		} catch (Exception e){
 			e.printStackTrace();
 			fail(e.getMessage());
 		}
 	}
+	
+	public void testReadCatalog() throws Exception{
+		try {
+			System.out.println("===Catalog Read===\n");
+			System.out.print("Reading...");
+			ArrayList<CatalogGroup> groups = Catalog.readCatalog();
+			System.out.println("Complete.");
+			for(CatalogGroup g : groups){
+				for(CatalogProduct p : g.getProducts()){
+					System.out.println("Product : " + p.getName());
+					for(CatalogRatePlan rp : p.getRatePlans()){
+						System.out.println("\tProduct Rate Plan : " + rp.getName());
+						for(CatalogCharge c : rp.getCharges()){
+							System.out.println("\t\tProduct Rate Plan Charge : " + c.getName());
+						}
+					}
+				}
+			}
+		} catch (Exception e){
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+	
 }

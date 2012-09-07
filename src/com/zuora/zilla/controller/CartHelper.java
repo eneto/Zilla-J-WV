@@ -64,7 +64,7 @@ public class CartHelper {
 		// Retrieve the rate plan
 		CatalogRatePlan ratePlan = null;
 		try {
-			ratePlan = new CatalogHelper().getRatePlan(ratePlanId);
+			ratePlan = Catalog.getRatePlan(ratePlanId);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -15,9 +15,9 @@ import com.zuora.zilla.model.*;
 import com.zuora.zilla.util.*;
 
 import junit.framework.*;
-public class AmenderCleanupTest extends TestCase {
+public class CleanupTest extends TestCase {
 	
-	public AmenderCleanupTest(String name) {
+	public CleanupTest(String name) {
 		super(name);
 	}
 
@@ -26,8 +26,8 @@ public class AmenderCleanupTest extends TestCase {
 			ZApi zapi = new ZApi();
 			assertTrue(zapi.isLoggedIn);
 
-			QueryResult qresa = zapi.zQuery("Select Id From Account Where Name='JTest AmenderAccount'");
-			
+			QueryResult qresa = zapi.zQuery("Select Id From Account Where Name='JTest Account'");
+
 			if(qresa.getSize()>0){
 				ZObject[] zacts = qresa.getRecords();
 
@@ -38,8 +38,8 @@ public class AmenderCleanupTest extends TestCase {
 				}
 				assertTrue("Delete Account", delaRes[0].getSuccess());				
 			}
-	
-			QueryResult qresp = zapi.zQuery("Select Id From Product Where Name='JTest AmenderProduct'");
+
+			QueryResult qresp = zapi.zQuery("Select Id From Product Where Name='JTest Product'");
 			if(qresp.getSize()>0){
 				ZObject[] zprods = qresp.getRecords();
 				Product p1 = (Product) zprods[0];			
@@ -49,7 +49,7 @@ public class AmenderCleanupTest extends TestCase {
 				}
 				assertTrue("Delete Product", delpRes[0].getSuccess());
 			}
-			
+
 		} catch (Exception e){
 			e.printStackTrace();
 			fail(e.getMessage());

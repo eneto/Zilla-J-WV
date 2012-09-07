@@ -81,9 +81,9 @@ public class Amender {
 		//If a quantity has been passed, specify charge data to cover all quantifiable charges on the rate plan being added
 		if (qty != null) {
 			ArrayList<RatePlanChargeData> listRpcd = new ArrayList<RatePlanChargeData>();
-			CatalogHelper catalog = null;
+			Catalog catalog = null;
 			try {
-				catalog = new CatalogHelper();
+				catalog = new Catalog();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

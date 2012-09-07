@@ -19,7 +19,7 @@ import com.zuora.zilla.util.*;
  * This is the main controller of the backend application for Zuora Java API Client.
  * @author Mickael Pham <mickael.pham@zuora.com>
  */
-@WebServlet("/BackendServlet")
+@WebServlet("/backend")
 public class BackendServlet extends HttpServlet {
 
 	private static final long serialVersionUID = 1L;

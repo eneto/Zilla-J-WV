@@ -1,14 +1,13 @@
-@import url('secondary-light-teal.css');
 /* ************************************************************************* */
-/* KARMA LIGHT TEAL
+/* KARMA TEAL GREY
 /* ************************************************************************* */
 
 
 /*---------------------------------------------------------------*/
 /* HEADER 
 /*---------------------------------------------------------------*/
-#header .header-holder {background:#19292E url(../images/karma-light-teal/bg-header-holder.jpg) 0 0 repeat-x !important;}
-.big-banner #header .header-holder {background:#19292E url(../images/karma-light-teal/bg-big-header-holder.png) 0 0 repeat-x !important;}
+#header .header-holder {background:#19292E url(../images/karma-teal-grey/bg-header-holder.jpg) 0 0 repeat-x !important;}
+.big-banner #header .header-holder {background:#19292E url(../images/karma-teal-grey/bg-big-header-holder.png) 0 0 repeat-x !important;}
 .top-block {background:#19292E !important;}
 
 
@@ -16,8 +15,8 @@
 /*---------------------------------------------------------------*/
 /* FOOTER
 /*---------------------------------------------------------------*/
-#footer {background:#19292E url(../images/karma-light-teal/bg-footer.jpg) repeat-x !important;}
-#footer_bottom {background:#111C20 url(../images/karma-light-teal/bg-footer-bottom.jpg) repeat-x !important;color: #868686 !important;}
+#footer {background:#19292E url(../images/karma-teal-grey/bg-footer.jpg) repeat-x !important;}
+#footer_bottom {background:#111C20 url(../images/karma-teal-grey/bg-footer-bottom.jpg) repeat-x !important;color: #868686 !important;}
 #footer .contact-form label span, #footer .twitterList li .tweet_days {color:#CCC !important;}
 
 
@@ -41,11 +40,8 @@
 #menu-main-nav li {background:url(../images/_global/seperator-main-nav.png) 0 50% no-repeat !important;}
 
 /* dropdown */
-#menu-main-nav .drop .t {background:url(../images/_global/global-sprite.png) -960px -1782px no-repeat !important;}
-#menu-main-nav .drop .b {background:url(../images/_global/global-sprite.png) -960px -1793px no-repeat !important;}
 #menu-main-nav .drop .c, #menu-main-nav li.parent:hover {background:#111C20 !important;}
 /* IE only - un-comment for rounded corners 
-*:first-child+html #menu-main-nav li.parent:hover {background:url(../images/_global/global-sprite.png) -960px -1721px no-repeat !important;}
 *:first-child+html #menu-main-nav li.parent:hover {background-color: transparent !important;}
 *:first-child+html #menu-main-nav li.parent {min-width: 88px !important;width: auto !important;} */
 
@@ -53,27 +49,27 @@
 
 /* dropdown link hover rounded image top */
 #menu-main-nav .drop ul li.hover a,
-#menu-main-nav .drop ul a:hover {background:#435961 url(../images/karma-light-teal/bg-drop-li-t.jpg) no-repeat !important;}
+#menu-main-nav .drop ul a:hover {background:#435961 url(../images/karma-teal-grey/bg-drop-li-t.jpg) no-repeat !important;}
 #menu-main-nav .drop ul .drop ul li.hover a,
-#menu-main-nav .drop ul .drop ul a:hover {background:#435961 url(../images/karma-light-teal/bg-drop-li-t.jpg) no-repeat !important;}
+#menu-main-nav .drop ul .drop ul a:hover {background:#435961 url(../images/karma-teal-grey/bg-drop-li-t.jpg) no-repeat !important;}
 #menu-main-nav .drop ul .drop ul .drop ul li.hover a,
-#menu-main-nav .drop ul .drop ul .drop ul a:hover {background:#435961 url(../images/karma-light-teal/bg-drop-li-t.jpg) no-repeat !important;}
+#menu-main-nav .drop ul .drop ul .drop ul a:hover {background:#435961 url(../images/karma-teal-grey/bg-drop-li-t.jpg) no-repeat !important;}
 #menu-main-nav .drop ul .drop ul .drop ul li.current-menu-item a,
 #menu-main-nav .drop ul .drop ul .drop ul li.current_page_ancestor a,
 #menu-main-nav .drop ul .drop ul .drop ul li.hover a,
-#menu-main-nav .drop ul .drop ul .drop ul a:hover {background:#435961 url(../images/karma-light-teal/bg-drop-li-t.jpg) no-repeat !important;}
+#menu-main-nav .drop ul .drop ul .drop ul a:hover {background:#435961 url(../images/karma-teal-grey/bg-drop-li-t.jpg) no-repeat !important;}
 
 /* dropdown link hover rounded image bottom */
 #menu-main-nav .drop ul li.hover a span,
-#menu-main-nav .drop ul a:hover span {background:url(../images/karma-light-teal/bg-drop-li-b.jpg) 0 100% no-repeat !important;color:#FFF !important;}
+#menu-main-nav .drop ul a:hover span {background:url(../images/karma-teal-grey/bg-drop-li-b.jpg) 0 100% no-repeat !important;color:#FFF !important;}
 #menu-main-nav .drop ul .drop ul li.hover a span,
-#menu-main-nav .drop ul .drop ul a:hover span {background:url(../images/karma-light-teal/bg-drop-li-b.jpg) 0 100% no-repeat !important;color:#FFF !important;}
+#menu-main-nav .drop ul .drop ul a:hover span {background:url(../images/karma-teal-grey/bg-drop-li-b.jpg) 0 100% no-repeat !important;color:#FFF !important;}
 #menu-main-nav .drop ul .drop ul .drop ul li.hover a span,
-#menu-main-nav .drop ul .drop ul .drop ul a:hover span {background:url(../images/karma-light-teal/bg-drop-li-b.jpg) 0 100% no-repeat !important;color:#FFF !important;}
+#menu-main-nav .drop ul .drop ul .drop ul a:hover span {background:url(../images/karma-teal-grey/bg-drop-li-b.jpg) 0 100% no-repeat !important;color:#FFF !important;}
 #menu-main-nav .drop ul .drop ul .drop ul li.current-menu-item a span,
 #menu-main-nav .drop ul .drop ul .drop ul li.current_page_ancestor a span,
 #menu-main-nav .drop ul .drop ul .drop ul li.hover a span,
-#menu-main-nav .drop ul .drop ul .drop ul a:hover span {background:url(../images/karma-light-teal/bg-drop-li-b.jpg) 0 100% no-repeat !important;color:#FFF !important;}
+#menu-main-nav .drop ul .drop ul .drop ul a:hover span {background:url(../images/karma-teal-grey/bg-drop-li-b.jpg) 0 100% no-repeat !important;color:#FFF !important;}
 
 /* misc nav settings */
 #menu-main-nav li.current-menu-parent li a span,
@@ -103,6 +99,7 @@
 /*---------------------------------------------------------------*/
 .top-block, .top-block a, #header .toolbar-left li, #header .toolbar-right li {color:#B1B1B1;}
 
+.footer-holder a {color:#7A93A1 !important;}
 .footer-holder a:hover {color:#FFF !important;}
 #footer_bottom a {color:#7A93A1 !important;text-decoration:underline;}
 #footer_bottom a:hover {color:#FFF !important;text-decoration:none;}

@@ -99,17 +99,7 @@ public class App extends HttpServlet {
 		List<CatalogGroup> groups = null;
 		try {
 			// Retrieve the catalog from z-java and refresh the cache
-			CatalogHelper catalogHelper=null;
-			try {
-				catalogHelper = new CatalogHelper();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			catalogHelper.refreshCache();
-
-			// Get the vector from catalog
-			groups = catalogHelper.getCatalogGroups();
+			groups = Catalog.refreshCatalog();
 
 		} catch (Exception e) {
 			e.printStackTrace();

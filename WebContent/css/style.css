@@ -62,10 +62,6 @@ html {
      width: 980px;
 }
 
-#header .rays {
-     background: url("../images/rays.png") no-repeat scroll 50% 0pt transparent;
-}
-
 #header .header-area {
      margin: 0pt auto;
      padding: 38px 0pt 33px;
@@ -73,7 +69,6 @@ html {
 }
 
 #main {
-     background: url("../images/bg-div-main.jpg") repeat-x scroll 0pt 0pt transparent;
      display: table-footer-group;
      position: relative;
      width: 100%;
@@ -175,7 +170,6 @@ html {
 }
 
 .portfolio_one_column_last {
-     background: url("../images/global-sprite.png") no-repeat scroll 0pt -31px transparent;
      float: right;
      height: 602px;
      position: relative;
