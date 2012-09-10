@@ -329,10 +329,8 @@ public class App extends HttpServlet {
 			}
 			this.array = false;
 			try {
-				BigDecimal amount = subscriptionManager.previewCurrentCart(cartHelper);
-				if (amount != null) {
-					return output(amount.toPlainString());
-				}
+				SubscribePreview preview = subscriptionManager.previewCurrentCart(cartHelper);
+				return output(preview);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

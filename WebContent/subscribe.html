@@ -32,11 +32,19 @@
 				$('.subtotal_display').hide();
 				$.getJSON("backend?type=PreviewCurrentCart",
 					function(data2){
-						if(!data2.success) {
-							alert(data2.msg[0].msg);
-						}
-						else {
-							$('.subtotal_value').text(data2.msg[0]);
+						var msg = data2.msg[0];
+						if(!msg.success) {
+							var errorMessage = msg.error;
+							if(msg.error=='EMPTY_CART'){
+								errorMessage = 'WARNING: Please add at least one item to your cart before subscribing.';
+							} else if(msg.error=='RATE_PLAN_DOESNT_EXIST'){
+								errorMessage = 'WARNING: There was an error calculating your total. One or more of your selected items may no longer be in our system. Please remove it before continuing.';
+							} else if(msg.error=='RATE_PLAN_EXPIRED'){
+								errorMessage = 'WARNING: One of your selected items is no longer being offered. Please remove it before continuing.';
+							}
+							alert( errorMessage );
+						} else {
+							$('.subtotal_display').text("First Invoice Total Before Tax: $" +msg.invoiceAmount );
 							$('.subtotal_display').show();
 						}
 					}

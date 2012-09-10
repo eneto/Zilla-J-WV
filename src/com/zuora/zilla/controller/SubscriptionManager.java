@@ -1,5 +1,6 @@
 package com.zuora.zilla.controller;
 
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.rmi.RemoteException;
 import java.text.DateFormat;
@@ -386,7 +387,8 @@ public class SubscriptionManager {
 		subscription.setTermType("EVERGREEN");
 		subscription.setStatus("Active");
 		
-		SubscriptionData subscriptionData = SubscriptionManager.getSubscriptionDataRatePlanFromCart(cartHelper);
+		SubscriptionData subscriptionData = new SubscriptionData();
+		subscriptionData.setRatePlanData(SubscriptionManager.getSubscriptionDataRatePlanFromCart(cartHelper));
 		subscriptionData.setSubscription(subscription);
 		
 		// Create the subscription request
@@ -415,12 +417,24 @@ public class SubscriptionManager {
 	/**
 	 * Creates dummy subscription with current cart, used to determine the value
 	 * of the first invoice.
+	 * @author Eric Neto
 	 * 
 	 * @return SubscribeResult with preview information
 	 * @throws UnexpectedErrorFault
 	 * @throws RemoteException
 	 */
-	public BigDecimal previewCurrentCart(CartHelper cartHelper) {
+	public SubscribePreview previewCurrentCart(CartHelper cartHelper) {
+		SubscribePreview preview = new SubscribePreview();
+		
+
+		//If Cart is empty, return an empty cart message
+		if(cartHelper.getCartItems().size()==0){
+			preview.invoiceAmount = 0.00;
+			preview.success = false;
+			preview.error = "EMPTY_CART";
+			return preview;
+		}
+		
 		// Get the data from the sample (in order to preview from a 'fake'
 		// account)
 		Account account = AccountSample.makeAccount();
@@ -430,8 +444,8 @@ public class SubscriptionManager {
 
 		// Set up subscription
 		Subscription subscription = SubscriptionManager.makeSubscription();
-		SubscriptionData subscriptionData = SubscriptionManager
-				.getSubscriptionDataRatePlanFromCart(cartHelper);
+		SubscriptionData subscriptionData = new SubscriptionData();
+		subscriptionData.setRatePlanData(SubscriptionManager.getSubscriptionDataRatePlanFromCart(cartHelper));
 		subscriptionData.setSubscription(subscription);
 
 		// Create the subscription request
@@ -446,17 +460,36 @@ public class SubscriptionManager {
 		subscribes[0] = subReq;
 
 		// Do the subscription with Zuora API
-		SubscribeResult[] resp = null;
+		SubscribeResult[] resps = null;
 		try{
-			resp = zapi.zSubscribe(subscribes);
-		} catch (Exception e){
+			resps = zapi.zSubscribe(subscribes);
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		if (resp[0].getErrors() == null) {
-			return resp[0].getInvoiceData()[0].getInvoice()
-					.getAmountWithoutTax();
+		SubscribeResult resp = resps[0];
+		if(resp.getSuccess()){
+			if(resp.getInvoiceData()!=null){
+				//For a successful preview with invoice, return the amount.
+				preview.setInvoiceAmount(resp.getInvoiceData()[0].getInvoice().getAmount().doubleValue());
+				preview.setSuccess(true);
+			} else {
+				//For a successful preview with a zero-dollar invvoice, return 0.00.
+				preview.setInvoiceAmount(0.00);
+				preview.setSuccess(true);
+			}
+		} else {
+			//For an unsuccessful preview, return an appropriate error.
+			preview.setSuccess(false);
+			String errorResponse = resp.getErrors()[0].getMessage();
+			if(errorResponse.contains("ProductRatePlanId is invalid")){
+				preview.setError("RATE_PLAN_DOESNT_EXIST");
+			} else if (errorResponse.contains("RatePlan is out of date.")){
+				preview.setError("RATE_PLAN_EXPIRED");
+			} else {
+				preview.setError(errorResponse);
+			}
 		}
-		return null;
+		return preview;
 	}
 
 	/**
@@ -482,11 +515,10 @@ public class SubscriptionManager {
 	 *            the current cart (from HttpSession and the web client)
 	 * @return RatePlanData for subscribe
 	 */
-	private static SubscriptionData getSubscriptionDataRatePlanFromCart( CartHelper cartHelper) {
+	private static RatePlanData[] getSubscriptionDataRatePlanFromCart( CartHelper cartHelper) {
 		// Create the return object
-		SubscriptionData subscriptionData = new SubscriptionData();
 		ArrayList<RatePlanData> rpds = new ArrayList<RatePlanData>();
-
+		
 		// Loop for each item in the current cart
 		for (CartItem cartItem : cartHelper.getCartItems()) {
 			// Create and populate the Rate Plan Data to be included in the
@@ -510,7 +542,12 @@ public class SubscriptionManager {
 			
 			rpds.add(ratePlanData);
 		}
-		subscriptionData.setRatePlanData((RatePlanData[]) rpds.toArray());
-		return subscriptionData;
+		rpds.trimToSize();
+		
+		RatePlanData[] rpdsArray = new RatePlanData[rpds.size()];
+		for(int i = 0; i < rpds.size(); i++){
+			rpdsArray[i] = rpds.get(i);
+		}
+		return rpdsArray;
 	}
 }

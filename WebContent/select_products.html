@@ -102,14 +102,11 @@
 		var html = "";
 		for(var pgroupKey in data){
 			var pgroup = data[pgroupKey];
-			console.log("=Group");
 			html += "<div class='panel-section'>";
 			html += " <h4 style='margin:15px 0 5px 0'>"+pgroup.Name+"</h4>";
 			html += " <ul class='list_dv'>";
 			var products = pgroup.products;
-			console.log(pgroup);
 			for(var prodKey in products){
-				console.log("==Product");
 				var prod = products[prodKey];
 				html += "<li> <span class='clear-block'></span>";
 				html += "    <div class='product'>";
@@ -141,7 +138,7 @@
 			html += "  </div>";
 		}
 
-		$(".left-main.inner").html(html);
+		$(".left-main.inner").append(html);
 		$(".btn_add").click(function(event){
 			addToCart(event);
 		});

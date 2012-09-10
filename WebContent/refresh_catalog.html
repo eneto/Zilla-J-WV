@@ -15,7 +15,7 @@
 	var refreshCatalog = function(){
 		$("#loading").fadeIn('slow');
 		
-		$.getJSON("BackendServlet?type=RefreshCatalog",
+		$.getJSON("backend?type=RefreshCatalog",
 			function(data){
 				if(!data.success) {	addError(data.msg); }
 				else { 

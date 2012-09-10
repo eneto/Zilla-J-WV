@@ -105,7 +105,6 @@ public class BackendServlet extends HttpServlet {
 				output = backend.previewAddRatePlan(request);
 			} else if (type.equalsIgnoreCase("PreviewCurrentCart")) {
 				output = backend.previewCurrentCart(request);
-				
 			} else if (type.equalsIgnoreCase("PreviewRemoveRatePlan")) {
 				
 			} else if (type.equalsIgnoreCase("ReadCatalog")) {
