@@ -126,7 +126,7 @@ public class SubscriptionSetupTest extends TestCase {
 			DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 			df.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
 			Calendar today = Calendar.getInstance();
-			int mday = today.get(Calendar.DAY_OF_MONTH);	
+			int mday = today.get(Calendar.DAY_OF_MONTH);
 			
 			acc.setAutoPay(false);
 			acc.setCurrency("USD");
@@ -154,8 +154,8 @@ public class SubscriptionSetupTest extends TestCase {
 			
 			// Set up subscribe Options
 			SubscribeOptions subscribeOptions = new SubscribeOptions();
-			subscribeOptions.setGenerateInvoice(false);
-			subscribeOptions.setProcessPayments(false);
+			subscribeOptions.setGenerateInvoice(true);
+			subscribeOptions.setProcessPayments(true);
 			
 			PreviewOptions previewOptions = new PreviewOptions();
 			previewOptions.setEnablePreviewMode(false);

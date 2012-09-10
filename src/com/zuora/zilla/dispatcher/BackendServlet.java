@@ -11,6 +11,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import com.zuora.api.*;
+import com.zuora.api.object.*;
 import com.zuora.zilla.controller.*;
 import com.zuora.zilla.model.*;
 import com.zuora.zilla.util.*;
@@ -32,7 +34,7 @@ public class BackendServlet extends HttpServlet {
 		String type = request.getParameter("type");
 		// Final output to be written
 		String output = null;
-		System.out.println("Hit backend servlet: type "+type);
+		//System.out.println("Hit backend servlet: type "+type);
 		// Redirect to the correct action
 		if (request.getParameter("type") != null) {
 			// Request redirect type
@@ -108,10 +110,8 @@ public class BackendServlet extends HttpServlet {
 				
 			} else if (type.equalsIgnoreCase("ReadCatalog")) {
 				output = backend.readCatalog();
-				
 			} else if (type.equalsIgnoreCase("RefreshCatalog")) {
 				output = backend.refreshCatalog();
-				
 			} else if (type.equalsIgnoreCase("RemoveItemFromCart")) {
 				output = backend.removeItemFromCart(request);
 				

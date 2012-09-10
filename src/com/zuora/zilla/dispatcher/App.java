@@ -19,7 +19,17 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.JsonProcessingException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.JsonSerializer;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.SerializerProvider;
+import org.codehaus.jackson.map.ser.StdSerializerProvider;
+
 import com.zuora.api.SubscribeResult;
+import com.zuora.zilla.util.NullSerializer;
 import com.zuora.zilla.controller.*;
 import com.zuora.zilla.model.*;
 
@@ -54,34 +64,15 @@ public class App extends HttpServlet {
 	 *         the products and rate plans in the product catalog.
 	 */
 	public String readCatalog() {
-		String catalogJson = "";
 		List<CatalogGroup> groups = null;
-		BufferedReader in = null;
-		// Try reading the cache first
 		try {
-			in = new BufferedReader(new FileReader(CACHE_FILENAME));
-			catalogJson = in.readLine();
+			// Retrieve the catalog from z-java and refresh the cache
+			groups = Catalog.readCatalog();
 
-			// If the file exists but is empty -> refresh the catalog
-			if (catalogJson == null) {
-				return refreshCatalog();
-			}
-
-		} catch (FileNotFoundException e) {
-			// Then we refresh the catalog from Zuora
-			return refreshCatalog();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
-		} finally {
-			try {
-				if (in != null) {
-					in.close();
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
 		}
-		
+
 		this.array = true;
 		return output(groups);
 	}
@@ -346,10 +337,8 @@ public class App extends HttpServlet {
 				e.printStackTrace();
 			}
 		} else {
-			errors.add("Cart has not been set up.");
 			return output(null);
 		}
-		errors.add("Something bad occurred during the preview.");
 		return output(null);
 	}
 	
@@ -458,29 +447,36 @@ public class App extends HttpServlet {
 			// Prepare final Map output (to be parsed in JSON)
 			Map<String, Object> map = new HashMap<String, Object>();
 
-			// Check if some errors occurred
-			if (errors.size() > 0) {
-				map.put("login", false);
-				map.put("success", false);
-				map.put("msg", errors);
-			} else {
-				map.put("login", false);
-				map.put("success", true);
-				
-				// This part is just to have an array in any case (because of the client)
-				if (msg != null) {
-					if (array) {
-						map.put("msg", msg);
-					}
-					else {
-						List<Object> msgs = new ArrayList<Object>();
-						msgs.add(msg);
-						map.put("msg", msgs);
-					}
+			//Initialize Object Mapper for JSON encoding
+			ObjectMapper mapper = new ObjectMapper();
+			
+			//Suppress 'Null' values in output
+			StdSerializerProvider sp = new StdSerializerProvider();
+			sp.setNullValueSerializer(new NullSerializer());
+			mapper.setSerializerProvider(sp);
+
+			// This part is just to have an array in any case (because of the client)
+			if (msg != null) {
+				if (array) {
+					map.put("msg", msg);
+				}
+				else {
+					List<Object> msgs = new ArrayList<Object>();
+					msgs.add(msg);
+					map.put("msg", msgs);
 				}
 			}
+			// Parse in JSON
+			mapper.writeValue(strWriter, map);
+			strWriter.flush();
+			strWriter.close();
 
-
+		} catch (JsonGenerationException e) {
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -26,7 +26,7 @@ public class AccountManager {
 
 	/** The Zuora API instance used to handle soap calls. */
 	private ZApi zapi;
-	
+
 	public AccountManager() throws Exception {
 		// get the stub and the helper
 		try {
@@ -35,11 +35,11 @@ public class AccountManager {
 			throw new Exception("Invalid Login");
 		}
 	}
-	
+
 	public SummaryAccount getCompleteDetail(String accountName) {
 		// Create the object and get the basic information
 		SummaryAccount accountSummary = new SummaryAccount();
-		
+
 		Account acc = null;
 		QueryResult qresAcc = null;
 		try {
@@ -54,33 +54,30 @@ public class AccountManager {
 			e.printStackTrace();
 		}
 
-		
 		//Get Account Information
-
 		accountSummary.setName(acc.getName());
 		accountSummary.setBalance(acc.getBalance());
 		accountSummary.setLastInvoiceDate(acc.getLastInvoiceDate());
 		String defaultPmId = acc.getDefaultPaymentMethodId();
-		
+
 		QueryResult paymentResult = null;
 		try {
 			paymentResult = zapi.zQuery("SELECT Amount,EffectiveDate,CreatedDate FROM Payment WHERE AccountId='" + acc.getId() + "'");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-			
+
 		if(paymentResult.getSize()==0){
 			accountSummary.setLastPaymentDate(null);
 			accountSummary.setLastInvoiceDate(null);
 		} else {
 			//Sort payments by date
-			ArrayList<Payment> listPayments = new ArrayList<Payment>(Arrays.asList((Payment[]) paymentResult.getRecords()));
+			ArrayList<ZObject> listPayments = new ArrayList<ZObject>(Arrays.asList(paymentResult.getRecords()));
 			Collections.sort(listPayments, new CmpPayments());
 			Payment lastPayment = (Payment) listPayments.toArray()[0];
 			accountSummary.setLastPaymentDate(lastPayment.getEffectiveDate());
 			accountSummary.setLastPaymentAmount(lastPayment.getAmount());
 		}
-
 		//Get Contact with this email
 		SummaryContact contactSummary = new SummaryContact();
 		QueryResult qresCons = null;
@@ -93,7 +90,7 @@ public class AccountManager {
 		if(qresCons.getSize()==0){
 			accountSummary.setSuccess(false);
 			accountSummary.setError("CONTACT_DOESNT_EXIST");
-			return accountSummary;			
+			return accountSummary;
 		} else {
 			cont = (Contact) qresCons.getRecords()[0];
 		}
@@ -110,11 +107,6 @@ public class AccountManager {
 		contactSummary.setSuccess(true);
 
 		accountSummary.setContactSummary(contactSummary);
-
-		
-		//Get PaymentMethods with this Account Id
-		
-		
 		
 		// Get payment methods with this account id
 		ArrayList<PaymentDetail> paymentSummaries = new ArrayList<PaymentDetail>();
@@ -142,10 +134,8 @@ public class AccountManager {
 		}
 		accountSummary.setPaymentMethodSummaries(paymentSummaries);
 		
-		
 		accountSummary.setSuccess(true);
 		return accountSummary;
-
 	}
 	
 	
@@ -189,14 +179,16 @@ public class AccountManager {
 		// Create a contact record with this ID and all parameters that were passed in
 		Contact updated = new Contact();
 		updated.setId(contact.getId());
-		updated.setFirstName(updatedContact.getFirstName());
-		updated.setLastName(updatedContact.getLastName());
-		updated.setCountry(updatedContact.getCountry());
-		updated.setAddress1(updatedContact.getAddress1());
-		updated.setAddress2(updatedContact.getAddress2());
-		updated.setPostalCode(updatedContact.getPostalCode());
-		updated.setCity(updatedContact.getCity());
-		updated.setState(updatedContact.getState());
+		
+		if(updatedContact.getFirstName()!=null) updated.setFirstName(updatedContact.getFirstName());
+		if(updatedContact.getLastName()!=null) updated.setLastName(updatedContact.getLastName());
+		if(updatedContact.getCountry()!=null) updated.setCountry(updatedContact.getCountry());
+		if(updatedContact.getAddress1()!=null) updated.setAddress1(updatedContact.getAddress1());
+		if(updatedContact.getAddress2()!=null) updated.setAddress2(updatedContact.getAddress2());
+		if(updatedContact.getPostalCode()!=null) updated.setPostalCode(updatedContact.getPostalCode());
+		if(updatedContact.getCity()!=null) updated.setCity(updatedContact.getCity());
+		if(updatedContact.getState()!=null) updated.setState(updatedContact.getState());
+
 
 		try {
 			SaveResult[] uRes = zapi.zUpdate(new ZObject[] { updated });
@@ -212,15 +204,15 @@ public class AccountManager {
 		
 		return contactResult;
 	}
-	
+
 	/**
 	 * Comparator to sort payments by effective date.
 	 */
-	private class CmpPayments implements Comparator<Payment> {
+	private class CmpPayments implements Comparator<ZObject> {
 
 		@Override
-		public int compare(Payment a, Payment b) {
-			return a.getCreatedDate().compareTo(b.getCreatedDate());
+		public int compare(ZObject a, ZObject b) {
+			return ((Payment)a).getCreatedDate().compareTo(((Payment)b).getCreatedDate());
 		}
 		
 	}

@@ -51,10 +51,12 @@ public class Catalog {
 
 		// Step #1 -> get all products
 		ArrayList<CatalogProduct> products = getAllProducts();
+		products.trimToSize();
 
 		// Step #2 -> get all rate plans
 		for (CatalogProduct product : products) {
 			ArrayList<CatalogRatePlan> ratePlans = getAllRatePlans(product);
+			ratePlans.trimToSize();
 			product.setRatePlans(ratePlans);
 		}
 
@@ -62,6 +64,7 @@ public class Catalog {
 		for (CatalogProduct product : products) {
 			for (CatalogRatePlan catalogRatePlan : product.getRatePlans()) {
 				ArrayList<CatalogCharge> charges = getAllCharges(catalogRatePlan);
+				charges.trimToSize();
 				
 				boolean quantifiable = false;
 				String uom = null;
@@ -91,7 +94,7 @@ public class Catalog {
 
 		// Add this catalog group to the ArrayList
 		Catalog.catalogGroups.add(catalogGroup);
-		
+		catalogGroups.trimToSize();
 		return catalogGroups;
 	}
 

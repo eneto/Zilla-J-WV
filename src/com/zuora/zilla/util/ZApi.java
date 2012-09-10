@@ -4,8 +4,17 @@ import java.rmi.RemoteException;
 
 import org.apache.axis.message.SOAPHeaderElement;
 
-import com.zuora.api.*;
-import com.zuora.api.object.*;
+import com.zuora.api.AmendRequest;
+import com.zuora.api.AmendResult;
+import com.zuora.api.DeleteResult;
+import com.zuora.api.LoginResult;
+import com.zuora.api.QueryResult;
+import com.zuora.api.SaveResult;
+import com.zuora.api.SoapBindingStub;
+import com.zuora.api.SubscribeRequest;
+import com.zuora.api.SubscribeResult;
+import com.zuora.api.object.ZObject;
+
 
 public class ZApi {
 
