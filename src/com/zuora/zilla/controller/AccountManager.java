@@ -135,14 +135,83 @@ public class AccountManager {
 		return accountSummary;
 	}
 	
+	public SummaryAccount getPaymentMethodDetail(String accountName) {
+		// Create the object and get the basic information
+		SummaryAccount accountSummary = new SummaryAccount();
+
+		Account acc = null;
+		QueryResult qresAcc = null;
+		try {
+			qresAcc = zapi.zQuery("SELECT Id,DefaultPaymentMethodId FROM Account WHERE Name='" + accountName + "'");
+			if(qresAcc.getSize() == 0){
+				accountSummary.setSuccess(false);
+				accountSummary.setError("USER_DOESNT_EXIST");
+				return accountSummary;
+			}
+			acc = (Account) qresAcc.getRecords()[0];
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		String defaultPmId = acc.getDefaultPaymentMethodId();
+
+		QueryResult paymentResult = null;
+		try {
+			paymentResult = zapi.zQuery("SELECT Amount,EffectiveDate,CreatedDate FROM Payment WHERE AccountId='" + acc.getId() + "'");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		if(paymentResult.getSize()==0){
+			accountSummary.setLastPaymentDate(null);
+			accountSummary.setLastInvoiceDate(null);
+		} else {
+			//Sort payments by date
+			ArrayList<ZObject> listPayments = new ArrayList<ZObject>(Arrays.asList(paymentResult.getRecords()));
+			Collections.sort(listPayments, new CmpPayments());
+			Payment lastPayment = (Payment) listPayments.toArray()[0];
+			accountSummary.setLastPaymentDate(lastPayment.getEffectiveDate());
+			accountSummary.setLastPaymentAmount(lastPayment.getAmount());
+		}
+		
+		// Get payment methods with this account id
+		ArrayList<PaymentDetail> paymentSummaries = new ArrayList<PaymentDetail>();
+		
+		QueryResult qresPms = null;
+		try {
+			qresPms = zapi.zQuery("SELECT Id,CreditCardHolderName,CreditCardMaskNumber,"
+					+ "CreditCardExpirationYear,CreditCardExpirationMonth,CreditCardType "
+					+ "from PaymentMethod WHERE AccountId='" + acc.getId() + "'");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		for (ZObject z : qresPms.getRecords()) {
+			PaymentMethod pm = (PaymentMethod) z;
+			PaymentDetail d = new PaymentDetail();
+			d.setId(pm.getId());
+			d.setCardHolderName(pm.getCreditCardHolderName());
+			d.setMaskedNumber(pm.getCreditCardMaskNumber());
+			d.setExpirationYear(pm.getCreditCardExpirationYear());
+			d.setExpirationMonth(pm.getCreditCardExpirationMonth());
+			d.setCardType(pm.getCreditCardType());
+			d.setDefaultCard((pm.getId().equals(defaultPmId)));
+			paymentSummaries.add(d);
+		}
+		accountSummary.setPaymentMethodSummaries(paymentSummaries);
+		
+		accountSummary.setSuccess(true);
+		return accountSummary;
+	}
+	
 	
 	/**
 	 * Update the given user's information
 	 * @return the user ID if successful
 	 */
-	public ResponseUpdateContact updateContact(String accountName, SummaryContact updatedContact) {
+	public ResponseAction updateContact(String accountName, SummaryContact updatedContact) {
 		
-		ResponseUpdateContact contactResult = new ResponseUpdateContact();
+		ResponseAction contactResult = new ResponseAction();
 		
 		// Get Account ID with this name
 		String accountId = null;

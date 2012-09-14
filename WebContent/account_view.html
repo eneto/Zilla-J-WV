@@ -300,8 +300,18 @@
 		$('.paymentmethod-summary .loading').show();
 		$.getJSON("backend?type=GetPaymentMethodSummary",
 			function(data){
+				var acc = data.msg[0];
+				if(acc.error=='USER_DOESNT_EXIST'){
+					window.location.replace('login.html');
+					return;
+				}
+				if(acc.error=='INVALID_ZLOGIN'){
+					alert('There is an error with the server. Please try again later.');
+					window.location.replace('login.html');
+					return;
+				}
                 var html = "";
-				var ps = data.msg;
+				var ps = acc.paymentMethodSummaries;
 				//For each payment method, print out
 				for(var i = 0; i < ps.length; i++){
 					var pm = ps[i];
@@ -343,7 +353,7 @@
 		var buttonId = event.target.id;
 		var pmId = buttonId.split('pm_update_')[1];
 
-		$.getJSON("backend/index.php?type=UpdatePaymentMethod", {pmId:pmId},
+		$.getJSON("backend?type=ChangeDefaultPaymentMethod", {pmId:pmId},
 			function(data){
 				getPaymentMethodSummary();
         	} 
@@ -354,15 +364,20 @@
 		var buttonId = event.target.id;
 		var pmId = buttonId.split('pm_remove_')[1];
 
-		$.getJSON("backend/index.php?type=RemovePaymentMethod", {pmId:pmId},
+		$.getJSON("backend?type=RemovePaymentMethod", {pmId:pmId},
 			function(data){
-				getPaymentMethodSummary();
+				var resp = data.msg[0];
+				if (resp.success){
+					getPaymentMethodSummary();
+				} else {
+					alert("This card could not be deleted. Please try again later.");
+				}
         	} 
 		);
 	};
 	
 	function showNewPaymentMethodPanel(){
-		$.getJSON("backend/index.php?type=GetExistingIframeSrc",
+		$.getJSON("backend?type=GetExistingIframeSrc",
 			function(data){
 				$("#z_hppm_iframe").attr('src', data.msg[0]);
 				$('.add_payment_method_panel').show();

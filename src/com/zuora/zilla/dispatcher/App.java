@@ -145,7 +145,7 @@ public class App extends HttpServlet {
 		update.setCountry(request.getParameter("country"));
 		
 		// Update the contact
-		ResponseUpdateContact conResult=null;
+		ResponseAction conResult=null;
 		try {
 			conResult = new AccountManager().updateContact(accountName, update);
 		} catch (Exception e) {
@@ -195,6 +195,22 @@ public class App extends HttpServlet {
 		SummaryAccount summary=null;
 		try {
 			summary = new AccountManager().getCompleteDetail(email);
+		} catch (Exception e) {
+			summary.setSuccess(false);
+			summary.setError(e.getMessage());
+		}
+		return output(summary);
+	}
+
+	/**
+	 * Return payment method summary for the user with the given account name
+	 */
+	public String getPaymentMethodSummary(HttpServletRequest request) {
+		HttpSession session = request.getSession();
+		String email = (String) session.getAttribute("username");
+		SummaryAccount summary=null;
+		try {
+			summary = new AccountManager().getPaymentMethodDetail(email);
 		} catch (Exception e) {
 			summary.setSuccess(false);
 			summary.setError(e.getMessage());
@@ -369,6 +385,40 @@ public class App extends HttpServlet {
 		}
 		this.array = false;
 		return output(iframeUrl);
+	}
+	
+	/**
+	 * Remove Payment Method.
+	 */
+	public String removePaymentMethod(HttpServletRequest request) {
+		HttpSession session = request.getSession();
+		String accountName = (String) session.getAttribute("username");
+		String pmId = (String) request.getParameter("pmId");
+		ResponseAction resp=null;
+		try {
+			resp = new PaymentManager().removePaymentMethod(accountName, pmId);
+		} catch (Exception e) {
+			resp.setSuccess(false);
+			resp.setError(e.getMessage());
+		}
+		return output(resp);
+	}
+
+	/**
+	 * Change Default Payment Method.
+	 */
+	public String changeDefaultPaymentMethod(HttpServletRequest request) {
+		HttpSession session = request.getSession();
+		String accountName = (String) session.getAttribute("username");
+		String pmId = (String) request.getParameter("pmId");
+		ResponseAction resp=null;
+		try {
+			resp = new PaymentManager().changePaymentMethod(accountName, pmId);
+		} catch (Exception e) {
+			resp.setSuccess(false);
+			resp.setError(e.getMessage());
+		}
+		return output(resp);
 	}
 	
 	/**

@@ -17,10 +17,7 @@ function formatUDate(dateStr){
 	  function pad(n){return n<10 ? '0'+n : n}
 	  return pad(dateStr.getMonth()+1)+'/'
 	        + pad(dateStr.getDate())+'/'
-	        + dateStr.getFullYear()+" "
-	        + pad(dateStr.getHours()) + ":"
-	        + pad(dateStr.getMinutes()) + ":"
-	        + pad(dateStr.getSeconds());
+	        + dateStr.getFullYear();
 
 }
 

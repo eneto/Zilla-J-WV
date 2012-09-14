@@ -96,9 +96,8 @@ public class BackendServlet extends HttpServlet {
 				output = backend.refreshCatalog();
 			} else if (type.equalsIgnoreCase("RemoveItemFromCart")) {
 				output = backend.removeItemFromCart(request);
-				
 			} else if (type.equalsIgnoreCase("RemovePaymentMethod")) {
-				
+				output = backend.removePaymentMethod(request);				
 			} else if (type.equalsIgnoreCase("RemoveRatePlan")) {
 				
 			} else if (type.equalsIgnoreCase("SubscribeWithCurrentCart")) {
@@ -106,14 +105,14 @@ public class BackendServlet extends HttpServlet {
 				
 			} else if (type.equalsIgnoreCase("UpdateContact")) {
 				output = backend.updateContact(request);
-				
-			} else if (type.equalsIgnoreCase("UpdatePaymentMethod")) {
-				
+			} else if (type.equalsIgnoreCase("ChangeDefaultPaymentMethod")) {
+				output = backend.changeDefaultPaymentMethod(request);				
 			} else if (type.equalsIgnoreCase("UserLogin")) {
 				
 			} else if (type.equalsIgnoreCase("GetCompleteSummary")) {
 				output = backend.getCompleteSummary(request);
-				
+			} else if (type.equalsIgnoreCase("GetPaymentMethodSummary")) {
+				output = backend.getPaymentMethodSummary(request);
 			} else {
 				output = "The action selected ('" + type +"') is not supported by the backend.";
 			}

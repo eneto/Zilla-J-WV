@@ -5,6 +5,7 @@ import java.util.Random;
 
 import com.zuora.api.*;
 import com.zuora.api.object.*;
+import com.zuora.zilla.model.ResponseAction;
 import com.zuora.zilla.util.*;
 
 /**
@@ -26,20 +27,7 @@ public class PaymentManager {
 
 	/** The Constant APP_URL. */
 	private static final String APP_URL = "appUrl";
-
-	
-	/** The Zuora API instance used to handle soap calls. */
-	private ZApi zapi;
-	
-	public PaymentManager() throws Exception {
-		// get the stub and the helper
-		try {
-			zapi = new ZApi();
-		} catch (Exception e) {
-			throw new Exception("Invalid Login");
-		}
-	}
-	
+		
 	/**
 	 * Generates a URL for a new subscriber to enter credit card and contact
 	 * information.
@@ -61,8 +49,9 @@ public class PaymentManager {
 	public String getExistingIframeSrc(String accountName) {
 		String iframeUrl = null;
 
+		ZApi zapi = null;
 		try {
-			ZApi zapi = new ZApi();
+			zapi = new ZApi();
 		} catch (Exception e){
 			return e.getMessage();
 		}
@@ -187,15 +176,100 @@ public class PaymentManager {
 	 * Sets the default payment method of the logged in user to a different payment method on their account.
 	 * @param $pmId ID of new active payment method
 	 */
-	public void changePaymentMethod() {
-		// TODO
+	public ResponseAction changePaymentMethod(String accountName, String pmId) {
+		ResponseAction resp = new ResponseAction();
+
+		if(pmId==null){
+			resp.setSuccess(false);
+			resp.setError("NULL_PM_ID");
+			return resp;
+		}
+		
+		ZApi zapi = new ZApi();
+		try {
+			zapi = new ZApi();
+		} catch (Exception e){
+			resp.setSuccess(false);
+			resp.setError("INVALID_LOGIN");
+			return resp;
+		}
+
+		String accountId = null;
+		try {
+			QueryResult qresAcc = zapi.zQuery("SELECT Id FROM Account WHERE Name='" + accountName + "'");
+			accountId = qresAcc.getRecords()[0].getId();
+		} catch (Exception e) {
+			resp.setSuccess(false);
+			resp.setError(e.getMessage());
+			return resp;
+		}
+
+		if (accountId == null){
+			resp.setSuccess(false);
+			resp.setError("ACCOUNT_NOT_FOUND");
+			return resp;
+		}
+		
+		Account account = new Account();
+		account.setId(accountId);
+		account.setDefaultPaymentMethodId(pmId);
+		
+		try {
+			SaveResult[] upRes = zapi.zUpdate(new Account[]{ account });
+			if(upRes[0].getSuccess()){
+				resp.setSuccess(true);
+				return resp;
+			} else {
+				resp.setSuccess(false);
+				resp.setError(upRes[0].getErrors()[0].getMessage());
+				return resp;
+			}
+		} catch (Exception e) {
+			resp.setSuccess(false);
+			resp.setError(e.getMessage());
+			return resp;
+		}
 	}
 	
 	/**
 	 * Deletes the selected payment method from the logged in user's account.
+	 * @param accountName This should be the name of the logged in user, passed in to verify that the current usable is allowed to delete this payment method
 	 * @param $pmId ID of payment method to be removed
 	 */
-	public void removePaymentMethod() {
-		// TODO
+	public ResponseAction removePaymentMethod(String accountName, String pmId) {
+		ResponseAction resp = new ResponseAction();
+		
+		if(pmId==null){
+			resp.setSuccess(false);
+			resp.setError("NULL_PM_ID");
+			return resp;
+		}
+		
+		ZApi zapi = null;
+		try {
+			zapi = new ZApi();
+		} catch (Exception e){
+			resp.setSuccess(false);
+			resp.setError("INVALID_LOGIN");
+			return resp;
+		}
+
+		try {
+			//TODO: Validate this payment method is owned by the account passed in
+			
+			DeleteResult[] delRes = zapi.zDelete(new String[] { pmId }, "PaymentMethod");
+			if(delRes[0].getSuccess()){
+				resp.setSuccess(true);
+				return resp;
+			} else {
+				resp.setSuccess(false);
+				resp.setError(delRes[0].getErrors()[0].getMessage());
+				return resp;
+			}
+		} catch (Exception e) {
+			resp.setSuccess(false);
+			resp.setError(e.getMessage());
+			return resp;
+		}
 	}
 }

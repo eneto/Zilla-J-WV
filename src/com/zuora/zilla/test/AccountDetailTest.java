@@ -47,7 +47,7 @@ public class AccountDetailTest extends TestCase {
 			/*TEST*/
 			SummaryContact updatedContact = new SummaryContact();
 			updatedContact.setPostalCode(String.valueOf(System.nanoTime()));
-			ResponseUpdateContact res = am.updateContact("JTest Account", updatedContact);
+			ResponseAction res = am.updateContact("JTest Account", updatedContact);
 			/*TEST*/
 
 			//Print results
