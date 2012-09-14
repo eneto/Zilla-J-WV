@@ -16,7 +16,7 @@
 		$.getJSON("backend?type=IsUserLoggedIn",
 			function(data){
 				if(!data.success) {	
-					if(data.msg[0]=='SESSION_NOT_SET'){
+					if(data.msg[0]){
 						window.location.replace('login.html');
 					}
 				}
@@ -52,7 +52,6 @@
 		getSubscriptionSummary();
 	}
 
-
 	function getAccountSummary(){
 		$('.account-summary-table').hide();
 		$('.account-summary .loading').show();
@@ -62,28 +61,28 @@
 
 		$.getJSON("backend?type=GetCompleteSummary",
 			function(data){
-				if(data.msg[0].msg=='USER_DOESNT_EXIST'){
+				var acc = data.msg[0];
+				if(acc.error=='USER_DOESNT_EXIST'){
 					window.location.replace('login.html');
 					return;
 				}
-				if(data.msg[0].msg=='INVALID_ZLOGIN'){
+				if(acc.error=='INVALID_ZLOGIN'){
 					alert('There is an error with the server. Please try again later.');
 					window.location.replace('login.html');
 					return;
 				}
-				var acc = data.msg[0];
 				//Show Account Info
 				$('.account_name').html(acc.Name);
 				$('.last_payment_amount').html((acc.LastPaymentAmount!=null ? '$'+acc.LastPaymentAmount : 'N/A'));
 				$('.account_balance').html('$'+acc.Balance);
-				$('.last_payment_date').html((acc.LastPaymentDate!=null ? formatZDate(acc.LastPaymentDate) : 'N/A'));
-				$('.last_invoice_date').html((acc.LastInvoiceDate!=null ? formatZDate(acc.LastInvoiceDate) : 'N/A'));
+				$('.last_payment_date').html((acc.LastPaymentDate!=null ? formatUDate(acc.LastPaymentDate) : 'N/A'));
+				$('.last_invoice_date').html((acc.LastInvoiceDate!=null ? formatUDate(acc.LastInvoiceDate) : 'N/A'));
 				$('.account-summary .loading').hide();
 				$('.account-summary-table').fadeIn('fast');				
 				$('.view_last_pdf').click(viewLastPdf);
 				
 				//Show Contact Info
-				var con = data.msg[0].contactSummary;
+				var con = acc.contactSummary;
 				//Set input and output fields to User Contacts
 				$('.contact-summary-table-output .first_name').text(con.FirstName);
 				$('.contact-summary-table-input .first_name:text').val(con.FirstName);
@@ -107,7 +106,7 @@
 				
 				//Show PaymentMethod Info
 				var html = "";
-				var ps = data.msg[0].paymentMethodSummaries;
+				var ps = acc.paymentMethodSummaries;
 				//For each payment method, print out
 				for(var i = 0; i < ps.length; i++){
 					var pm = ps[i];

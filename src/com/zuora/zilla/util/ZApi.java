@@ -150,6 +150,7 @@ public class ZApi {
 	 * @throws RemoteException 
 	 */
 	public SubscribeResult[] zSubscribe(SubscribeRequest[] subReqs) throws Exception {
+
  		SubscribeResult[] sres ;
  		try{
  			sres = stub.subscribe(subReqs);

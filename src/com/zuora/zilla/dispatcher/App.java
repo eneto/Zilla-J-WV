@@ -116,11 +116,10 @@ public class App extends HttpServlet {
 	public String isUserLoggedIn(HttpServletRequest request) {
 		HttpSession session = request.getSession();
 		if (session.getAttribute("email") != null && !session.getAttribute("email").equals("")) {
-			this.array = false;
 			return output(true);
 		} else {
 			errors.add("SESSION_NOT_SET");
-			return output(null);
+			return output(false);
 		}
 	}
 	
@@ -197,8 +196,8 @@ public class App extends HttpServlet {
 		try {
 			summary = new AccountManager().getCompleteDetail(email);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			summary.setSuccess(false);
+			summary.setError(e.getMessage());
 		}
 		return output(summary);
 	}
@@ -399,7 +398,7 @@ public class App extends HttpServlet {
 		HttpSession session = request.getSession();
 		CartHelper cartHelper = (CartHelper) session.getAttribute("cart");
 		
-		Map<String, Object> data=null;
+		ResponseSubscribe data=null;
 		try {
 			data = new SubscriptionManager().subscribeWithCurrentCart(userEmail, pmId, cartHelper);
 		} catch (Exception e) {
@@ -407,32 +406,30 @@ public class App extends HttpServlet {
 			e.printStackTrace();
 		}
 		
-		if (data.containsKey("error")) {
-			String msgError = (String) data.get("error");
+		if (!data.isSuccess()) {
+			String msgError = (String) data.getError();
 			
 			if (msgError.equalsIgnoreCase("DUPLICATE_EMAIL")) {
-				this.errors.add("This email address is already in use. Please choose another and re-submit");
-				return output(null);
-				
+				data.setError("This email address is already in use. Please choose another and re-submit");
+				data.setSuccess(false);
+				return output(data);				
 			} else if (msgError.equalsIgnoreCase("INVALID_PMID")) {
-				this.errors.add("The payment ID submitted is invalid. Please try again.");
-				return output(null);
-				
-			} else if (msgError.equalsIgnoreCase("A_PROBLEM_OCCURED")) {
-				this.errors.add("There was an error processing this transaction. Please try again.");
-				return output(null);
+				data.setError("The payment ID submitted is invalid. Please try again.");
+				data.setSuccess(false);
+				return output(data);	
+			} else {
+				data.setError(msgError);
+				data.setSuccess(false);
+				return output(data);
 				
 			}
 		}
 		
 		// Put the return (user e-mail address) in the session
 		session.setAttribute("email", userEmail);
-		
-		// Get the response object (from stub)
-		SubscribeResult[] resp = (SubscribeResult[]) data.get("success");
-		
-		// TODO (add array = false?)
-		return output(resp);
+
+		data.setSuccess(true);
+		return output(data);
 	}
 
 	/**

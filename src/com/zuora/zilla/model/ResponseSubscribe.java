@@ -1,8 +1,16 @@
 package com.zuora.zilla.model;
 
-public class SubscribeCreate {
+public class ResponseSubscribe {
 	private String error;
 	private boolean success;
+	private String subscriptionId;
+	
+	public String getSubscriptionId() {
+		return subscriptionId;
+	}
+	public void setSubscriptionId(String subscriptionId) {
+		this.subscriptionId = subscriptionId;
+	}
 	public String getError() {
 		return error;
 	}

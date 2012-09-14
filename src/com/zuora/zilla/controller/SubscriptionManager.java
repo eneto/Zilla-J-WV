@@ -281,20 +281,19 @@ public class SubscriptionManager {
 	 *         Payment Method ID passed doesn't exist, returns the error string,
 	 *         'INVALID_PMID'
 	 */
-	public Map<String, Object> subscribeWithCurrentCart(String userEmail, String pmId, CartHelper cartHelper) {
+	public ResponseSubscribe subscribeWithCurrentCart(String userEmail, String pmId, CartHelper cartHelper) {
 		
-		Map<String, Object> data = new HashMap<String, Object>();
+		ResponseSubscribe data = new ResponseSubscribe();
 		
 		try {
 			if (!new AccountManager().checkEmailAvailability(userEmail)) {
-				data.put("error", "DUPLICATE_EMAIL");
+				data.setError("DUPLICATE_EMAIL");
+				data.setSuccess(false);
 				return data;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
-		System.out.println("** Start querying Zuora with PaymentId: " + pmId);
 		
 		// Get Contact Information from newly created user
 		QueryResult pmResult = null;
@@ -308,14 +307,13 @@ public class SubscriptionManager {
 		}
 		
 		if (pmResult == null || pmResult.getSize() == 0) {
-			data.put("error", "INVALID_PMID");
+			data.setError("INVALID_PMID");
+			data.setSuccess(false);
 			return data;
 		}
 		
 		PaymentMethod pm = (PaymentMethod) pmResult.getRecords()[0];
 		String holderName = (pm.getCreditCardHolderName() != null) ? pm.getCreditCardHolderName() : "";
-		
-		System.out.println("** Holder Name: " + holderName);
 		
 		// Derive first and last name from CardHolderName
 		String firstName, lastName;
@@ -408,9 +406,13 @@ public class SubscriptionManager {
 		try{
 			resp = zapi.zSubscribe(subscribes);
 		} catch (Exception e){
-			e.printStackTrace();
+			data.setError(e.getMessage());
+			data.setSuccess(false);
+			return data;
 		}
 		
+		data.setSubscriptionId(resp[0].getSubscriptionId());
+		data.setSuccess(true);
 		return data;
 	}
 

@@ -1,5 +1,9 @@
 package com.zuora.zilla.controller;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ArrayList;
@@ -20,9 +24,10 @@ import com.zuora.zilla.util.*;
  * @author Mickael Pham <mickael.pham@zuora.com>
  */
 public class Catalog {
-	/** ArrayList that contains all available products, rate plans and charges. */
-	private static ArrayList<CatalogGroup> catalogGroups = null;
-
+	/**ArrayList containing all catalog groups**/
+	private static ArrayList<CatalogGroup> catalogGroups;
+	
+	
 	/** Date formatted to query Zuora, using GMT-8 (see ZuoraUtility). */
 	private static String today;
 
@@ -31,19 +36,38 @@ public class Catalog {
 
 
 	public static ArrayList<CatalogGroup> readCatalog() {
-		//If catalogGroups is not set, refresh the catalog
-		//TODO Reset catalog after a certain amount of time.
-		if (Catalog.catalogGroups == null) {
-			refreshCatalog();
+		if(catalogGroups==null){
+			//Read in from a file.
+//	         CatalogModel cat = null;
+//	         System.out.println("reading cache");
+//	         try
+//	         {
+//	            FileInputStream fileIn =
+//	            		new FileInputStream("catalog_cache.ser");
+//	            ObjectInputStream in = new ObjectInputStream(fileIn);
+//	        	System.out.println("cache read from file");
+//	            cat = (CatalogModel) in.readObject();
+//	            in.close();
+//	            fileIn.close();
+//	            
+//	            return cat.getCatalogGroups();
+//	            
+//	        }catch(Exception e) {
+//				//If the file doesn't exist, refresh the catalog
+//	        	System.out.println(e.getMessage());
+//	        	System.out.println("cache not found; reading from zuora");
+				return refreshCatalog();        
+//	        }
+		} else {
+			return catalogGroups;
 		}
-		return Catalog.catalogGroups;
 	}
 	
-	/** Return all available products (available today). */
+	/** Return all products available today. */
 	public static ArrayList<CatalogGroup> refreshCatalog() {
 		zapi = new ZApi();
-		
-		Catalog.catalogGroups = new ArrayList<CatalogGroup>();
+
+		ArrayList<CatalogGroup> catalogGroups = new ArrayList<CatalogGroup>();
 		// TODO Allow user to filter out specific groups, to be configured in the config file
 		// TODO Optimize to use Data Exports instead of queries
 
@@ -65,10 +89,10 @@ public class Catalog {
 			for (CatalogRatePlan catalogRatePlan : product.getRatePlans()) {
 				ArrayList<CatalogCharge> charges = getAllCharges(catalogRatePlan);
 				charges.trimToSize();
-				
+
 				boolean quantifiable = false;
 				String uom = null;
-				
+
 				for (CatalogCharge charge : charges) {
 					if (!charge.getChargeType().equals("Usage")
 							&& (charge.getChargeModel().equals("Per Unit Pricing")
@@ -93,9 +117,25 @@ public class Catalog {
 		catalogGroup.setName("");
 
 		// Add this catalog group to the ArrayList
-		Catalog.catalogGroups.add(catalogGroup);
+		catalogGroups.add(catalogGroup);
 		catalogGroups.trimToSize();
-		return catalogGroups;
+		
+		//Write the catalog to a file for future use.
+//		CatalogModel cat = new CatalogModel();
+//		try{
+//			FileOutputStream fileOut =
+//				new FileOutputStream("catalog_cache.ser");
+//			ObjectOutputStream out =
+//				new ObjectOutputStream(fileOut);
+//			out.writeObject(cat);
+//			out.close();
+//			fileOut.close();
+//		} catch (Exception e){
+//			System.out.println(e.getMessage());
+//		}
+		
+		Catalog.catalogGroups = catalogGroups;
+		return Catalog.catalogGroups;
 	}
 
 	/** Display catalogGroup object in the console. */

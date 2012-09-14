@@ -6,7 +6,7 @@ import java.util.Vector;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 
-public class CatalogRatePlan {
+public class CatalogRatePlan implements java.io.Serializable  {
 
 	private String id;
 	private String name = "";

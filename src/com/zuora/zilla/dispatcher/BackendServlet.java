@@ -59,26 +59,6 @@ public class BackendServlet extends HttpServlet {
 				output = backend.getNewIframeSrc();
 			} else if (type.equalsIgnoreCase("IsUserLoggedIn")) {
 				output = backend.isUserLoggedIn(request);
-			} else if (type.equalsIgnoreCase("Login")) {
-				// TODO need to be implemented by final client
-				HttpSession session = request.getSession();
-				if (!request.getParameter("username").isEmpty()) {
-					String email = request.getParameter("username");
-					try {
-						if (!new AccountManager().checkEmailAvailability(email)) {
-							session.setAttribute("email", email);
-							response.sendRedirect("account_view.html");
-						} else {
-							output = "Invalid email";
-						}
-					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				} else {
-					output = "empty email";
-				}
-			
 			} else if (type.equalsIgnoreCase("GetLastPdf")) {
 				HttpSession session = request.getSession();
 				String email = (String) session.getAttribute("email");
@@ -131,6 +111,13 @@ public class BackendServlet extends HttpServlet {
 			} else if (type.equalsIgnoreCase("GetCompleteSummary")) {
 				output = backend.getCompleteSummary(request);
 				
+			} else if (type.equalsIgnoreCase("Login")) {
+				ResultUserLogin ures = login(request);
+				if(ures.isSuccess()){
+					response.sendRedirect("account_view.html");
+				} else {
+					response.getWriter().print(ures.getError());
+				}
 			} else {
 				output = "The action selected ('" + type +"') is not supported by the backend.";
 			}
@@ -151,5 +138,51 @@ public class BackendServlet extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 	}
+	
+	protected ResultUserLogin login(HttpServletRequest request){
+		HttpSession session = request.getSession();
+		ResultUserLogin logres = new ResultUserLogin();
+		if (!request.getParameter("username").isEmpty()) {
+			logres.setSuccess(false);
+			logres.setError("Must enter Username");
+			return logres;
+		}
+		if (!request.getParameter("passwd").isEmpty()) {
+			logres.setSuccess(false);
+			logres.setError("Must enter Password");
+			return logres;
+		}
 
+		String username = request.getParameter("username");
+		String passwd = request.getParameter("passwd");
+		
+		boolean success = validateLogin(username, passwd);
+		
+		if(success){
+			logres.setSuccess(true);
+			logres.setUserName(username);
+			session.setAttribute("email", username);
+		} else {
+			logres.setSuccess(false);
+			logres.setError("Invalid Username/Password");
+		}
+		return logres;
+	}
+
+	protected boolean validateLogin(String username, String passwd) {
+		// TODO Authentication needs to be implemented by client
+
+		//Skeleton login: If account exists, validate regardless of password.
+		AccountManager am = null;
+		try{
+			am = new AccountManager();
+		} catch (Exception e){
+			return false;
+		}
+		if (!am.checkEmailAvailability(username)) {
+			return true;
+		} else {
+			return false;
+		}		
+	}
 }

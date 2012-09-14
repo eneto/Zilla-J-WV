@@ -10,7 +10,7 @@
 <script type="text/javascript" src="js/function.js"></script>
 <script type="text/javascript" src="js/postmessage.js"></script> 
 <script type="application/javascript" >
-	
+
 	$(document).ready(function(){
 		$("#infor").hide();
 		$("#loading").hide();
@@ -18,11 +18,11 @@
 		$(".email_avail").hide();
 		$(".email_unavail").hide();
 		$('.subtotal_display').hide();
-		
+
 		previewCurrentCart();
 		displayNewIframe();
 	});
-	
+
 	var previewCurrentCart = function(){
 		//Get cart items
 		$.getJSON("backend?type=GetInitialCart",
@@ -96,27 +96,21 @@
 		var uEmail = $('#email').val();
 		$.getJSON("backend?type=SubscribeWithCurrentCart", {userEmail: uEmail, pmId: ref_id},
 			function(data){
-				console.log(data);
-				if(!data.success) {
-					alert(data.msg[0].msg);
+
+				var msg = data.msg[0];
+				if(msg.success){
+					//If successful, redirect to Account view page
+					window.location.replace('account_view.html');
+				} else {
+					//If unsuccessful, display error and re-render iframe
+					var html = '';
+					html = 'Your order was not submitted for the following reasons:<br /><ul>' + html;
+					var error = msg.error;
+					html += '<li>' + error + '</li>';
+					html += '</ul>';
+					$('.error_message').html(html);
+					$("#infor").show();
 					displayNewIframe();
-				}
-				else {
-					var result = data.msg[0].result[0];
-					if(result.success){
-						window.location.replace('account_view.html');
-					} else {
-						var html = '';
-						html = 'Your order was not submitted for the following reasons:<br /><ul>' + html;
-						var error = result['Errors'].Message;
-						if(error=='SubscriptionData.SubscriptionRatePlanData is required') error = 'You must select at least one product.';
-						if(error=='Missing required value: Name') error = 'Please enter your email address.';
-						html += '<li>' + error + '</li>';
-						html += '</ul>';
-						$('.error_message').html(html);
-						$("#infor").show();
-						displayNewIframe();
-					}
 				}
         	}
 		);

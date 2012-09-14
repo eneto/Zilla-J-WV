@@ -5,7 +5,7 @@ import java.util.Vector;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 
-public class CatalogGroup {
+public class CatalogGroup implements java.io.Serializable {
 
 	private String name = "";
 	private ArrayList<CatalogProduct> products;
