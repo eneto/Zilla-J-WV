@@ -40,13 +40,12 @@ public class InvoiceManager {
 			QueryResult qresAcc = zapi.zQuery("SELECT Id FROM Account WHERE Name='" + accountName + "'");
 			accountId = qresAcc.getRecords()[0].getId();
 		} catch (Exception e) {
-			e.printStackTrace();
+			return null;
 		}
-		
+
 		if (accountId == null)
 			return null; // ACCOUNT_DOES_NOT_EXIST
 
-		
 		// Get all invoices with this Account ID
 		QueryResult qresInvs = null;
 		try {
@@ -65,8 +64,8 @@ public class InvoiceManager {
 			// Sort invoices by invoice date
 			Collections.sort(listInvoices, new CmpInvoices());
 
-			Invoice[] invoices = (Invoice[]) listInvoices.toArray();
-			
+			Invoice[] invoices = listInvoices.toArray(new Invoice[listInvoices.size()]);
+
 			// Use the first invoice and return the body
 			try {
 				QueryResult qresLastInv = zapi.zQuery("SELECT Body FROM Invoice WHERE Id='" + invoices[0].getId() + "'");
@@ -78,7 +77,7 @@ public class InvoiceManager {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Comparator to sort invoices by invoice date
 	 */

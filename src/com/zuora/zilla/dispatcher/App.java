@@ -115,7 +115,7 @@ public class App extends HttpServlet {
 	 */
 	public String isUserLoggedIn(HttpServletRequest request) {
 		HttpSession session = request.getSession();
-		if (session.getAttribute("email") != null && !session.getAttribute("email").equals("")) {
+		if (session.getAttribute("username") != null && !session.getAttribute("username").equals("")) {
 			return output(true);
 		} else {
 			errors.add("SESSION_NOT_SET");
@@ -131,7 +131,7 @@ public class App extends HttpServlet {
 		
 		// Get the account name from the session
 		HttpSession session = request.getSession();
-		String accountName = (String) session.getAttribute("email");
+		String accountName = (String) session.getAttribute("username");
 		
 		// Create a new summary contact based on the query
 		SummaryContact update = new SummaryContact();
@@ -169,7 +169,7 @@ public class App extends HttpServlet {
 	 */
 	public String getLatestSubscription(HttpServletRequest request) {
 		HttpSession session = request.getSession();
-		String email = (String) session.getAttribute("email");
+		String email = (String) session.getAttribute("username");
 		AmenderSubscription subscription=null;
 		try {
 			subscription = new SubscriptionManager().getCurrentSubscription(email);
@@ -191,7 +191,7 @@ public class App extends HttpServlet {
 	 */
 	public String getCompleteSummary(HttpServletRequest request) {
 		HttpSession session = request.getSession();
-		String email = (String) session.getAttribute("email");
+		String email = (String) session.getAttribute("username");
 		SummaryAccount summary=null;
 		try {
 			summary = new AccountManager().getCompleteDetail(email);
@@ -359,7 +359,7 @@ public class App extends HttpServlet {
 	 */
 	public String getExistingIframeSrc(HttpServletRequest request) {
 		HttpSession session = request.getSession();
-		String email = (String) session.getAttribute("email");
+		String email = (String) session.getAttribute("username");
 		String iframeUrl=null;
 		try {
 			iframeUrl = new PaymentManager().getExistingIframeSrc(email);

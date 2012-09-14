@@ -12,12 +12,9 @@ import com.zuora.zilla.util.*;
 /**
  * The AccountManager class manages Account information for the logged in user.
  * 
- * All account summaries are based on the user that has been authetnicated and
- * whose Email address has been stored in the Session Header. To retrieve any of
- * these summaries, the user must:
+ * All account summaries are based on the account name passed in.
+ * Each method assumes exactly ONE Account exists with the given Name.
  * 
- * 	1) Populate the Session['uEmail'] with their contact email
- * 	2) Call the Get Account Detail Method
  * 
  * @author Mickael Pham <mickael.pham@zuora.com>
  * 

@@ -61,7 +61,7 @@ public class BackendServlet extends HttpServlet {
 				output = backend.isUserLoggedIn(request);
 			} else if (type.equalsIgnoreCase("GetLastPdf")) {
 				HttpSession session = request.getSession();
-				String email = (String) session.getAttribute("email");
+				String email = (String) session.getAttribute("username");
 				String body=null;
 				try {
 					body = new InvoiceManager().getLastInvoicePdf(email);
@@ -73,10 +73,13 @@ public class BackendServlet extends HttpServlet {
 				response.setHeader("Content-disposition",
 						"attachment; filename=latest.pdf");
 				ServletOutputStream pdfOutput = response.getOutputStream();
-				pdfOutput.write(ZuoraUtility.decodeBase64(body));
+				if(body!=null){
+					pdfOutput.write(ZuoraUtility.decodeBase64(body));
+				} else {
+					// TODO Handle errors when PDF is not found due to logged out user, no generated invoice, etc.
+				}
 //				out.print(ZuoraUtility.decodeBase64(body));
-				
-				
+				return;
 			} else if (type.equalsIgnoreCase("Logout")) {
 				request.getSession().invalidate();
 				response.sendRedirect("login.html");
@@ -111,13 +114,6 @@ public class BackendServlet extends HttpServlet {
 			} else if (type.equalsIgnoreCase("GetCompleteSummary")) {
 				output = backend.getCompleteSummary(request);
 				
-			} else if (type.equalsIgnoreCase("Login")) {
-				ResultUserLogin ures = login(request);
-				if(ures.isSuccess()){
-					response.sendRedirect("account_view.html");
-				} else {
-					response.getWriter().print(ures.getError());
-				}
 			} else {
 				output = "The action selected ('" + type +"') is not supported by the backend.";
 			}
@@ -137,52 +133,5 @@ public class BackendServlet extends HttpServlet {
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-	}
-	
-	protected ResultUserLogin login(HttpServletRequest request){
-		HttpSession session = request.getSession();
-		ResultUserLogin logres = new ResultUserLogin();
-		if (!request.getParameter("username").isEmpty()) {
-			logres.setSuccess(false);
-			logres.setError("Must enter Username");
-			return logres;
-		}
-		if (!request.getParameter("passwd").isEmpty()) {
-			logres.setSuccess(false);
-			logres.setError("Must enter Password");
-			return logres;
-		}
-
-		String username = request.getParameter("username");
-		String passwd = request.getParameter("passwd");
-		
-		boolean success = validateLogin(username, passwd);
-		
-		if(success){
-			logres.setSuccess(true);
-			logres.setUserName(username);
-			session.setAttribute("email", username);
-		} else {
-			logres.setSuccess(false);
-			logres.setError("Invalid Username/Password");
-		}
-		return logres;
-	}
-
-	protected boolean validateLogin(String username, String passwd) {
-		// TODO Authentication needs to be implemented by client
-
-		//Skeleton login: If account exists, validate regardless of password.
-		AccountManager am = null;
-		try{
-			am = new AccountManager();
-		} catch (Exception e){
-			return false;
-		}
-		if (!am.checkEmailAvailability(username)) {
-			return true;
-		} else {
-			return false;
-		}		
 	}
 }
