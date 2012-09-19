@@ -1,5 +1,5 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html>
 <head>
 <title>Account Detail</title>
 <link type="text/css" rel="stylesheet" href="css/style.css" />
@@ -12,16 +12,7 @@
 
 
 	$(document).ready(function(){
-		
-		$.getJSON("backend?type=IsUserLoggedIn",
-			function(data){
-				var success = data.msg[0];
-				if(!success){
-					window.location.replace('login.html');
-				}
-        	}
-		);
-		
+
 		$('.add_pm').hide();
 		$('.update_contact').hide();
 		$('.change_plan').hide();
@@ -29,15 +20,26 @@
 		$('.success_message').hide();
 		$('.error_message').hide();
 		$('.add_payment_method_panel').hide();
-		
+
 		$(".update_contact").click(function(event){
 			inputContactDetail(event);
 		});
 		$(".save_changes").click(function(event){
 			saveContactChange(event);
 		});
+
 		
-		validateLoggedInEmail();
+		$.getJSON("backend?type=IsUserLoggedIn",
+			function(data){
+				var success = data.msg[0];
+				if(!success){
+					alert("You are no longer logged in.");
+					window.location.replace('login.html');
+				} else {
+					validateLoggedInEmail();
+				}
+        	}
+		);
 	});
 
 	//Send a request to validate that the email address exists. Upon a successful result, send requests to load all account summaries.
@@ -379,7 +381,8 @@
 	function showNewPaymentMethodPanel(){
 		$.getJSON("backend?type=GetExistingIframeSrc",
 			function(data){
-				$("#z_hppm_iframe").attr('src', data.msg[0]);
+				var resp = data.msg[0];
+				$("#z_hppm_iframe").attr('src', resp.data);
 				$('.add_payment_method_panel').show();
 				$('.new_pm').click(submitNewPaymentMethod);
 				$('.cancel_pm').click(cancelNewPaymentMethod);

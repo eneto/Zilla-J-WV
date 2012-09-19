@@ -45,15 +45,16 @@ function callback() {
 					parent.hostedpagecallback_success('<%=request.getParameter("refId")%>');
 			<%	}
 				else {%>
-					parent.hostedpagecallback_failure('<%=request.getParameter("errorCode")%>', 
-							'<%=request.getParameter("errorMessage")%>',
-							'<%=request.getParameter("errorField_creditCardType")%>', 
-							'<%=request.getParameter("errorField_creditCardNumber")%>', 
-							'<%=request.getParameter("errorField_creditCardExpirationMonth")%>', 
-							'<%=request.getParameter("errorField_creditCardExpirationYear")%>', 
-							'<%=request.getParameter("errorField_cardSecurityCode")%>', 
-							'<%=request.getParameter("errorField_creditCardHolderName")%>'
-							);
+					parent.hostedpagecallback_failure(
+							<%=request.getParameter("errorCode")!=null ? "'"+request.getParameter("errorCode")+"'" : "''"%>, 
+							<%=request.getParameter("errorMessage")!=null ? "'"+request.getParameter("errorMessage")+"'" : "''"%>,
+							<%=request.getParameter("errorField_creditCardType")!=null ? "'"+request.getParameter("errorField_creditCardType")+"'" : "''"%>, 
+							<%=request.getParameter("errorField_creditCardNumber")!=null ? "'"+request.getParameter("errorField_creditCardNumber")+"'" : "''"%>, 
+							<%=request.getParameter("errorField_creditCardExpirationMonth")!=null ? "'"+request.getParameter("errorField_creditCardExpirationMonth")+"'" : "''"%>, 
+							<%=request.getParameter("errorField_creditCardExpirationYear")!=null ? "'"+request.getParameter("errorField_creditCardExpirationYear")+"'" : "''"%>, 
+							<%=request.getParameter("errorField_cardSecurityCode")!=null ? "'"+request.getParameter("errorField_cardSecurityCode")+"'" : "''"%>, 
+							<%=request.getParameter("errorField_creditCardHolderName")!=null ? "'"+request.getParameter("errorField_creditCardHolderName")+"'" : "''"%>
+					);
 			<%	}
 		}
 	}

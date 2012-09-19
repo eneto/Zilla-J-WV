@@ -292,7 +292,9 @@ public class SubscriptionManager {
 				return data;
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			data.setError("INVALID_EMAIL");
+			data.setSuccess(false);
+			return data;
 		}
 		
 		// Get Contact Information from newly created user
@@ -303,7 +305,9 @@ public class SubscriptionManager {
 					+ "CreditCardPostalCode,CreditCardState,Phone FROM PaymentMethod"
 					+ " WHERE Id='" + pmId + "'");
 		} catch (Exception e) {
-			e.printStackTrace();
+			data.setError("INVALID_PMID");
+			data.setSuccess(false);
+			return data;
 		}
 		
 		if (pmResult == null || pmResult.getSize() == 0) {
@@ -386,7 +390,13 @@ public class SubscriptionManager {
 		subscription.setStatus("Active");
 		
 		SubscriptionData subscriptionData = new SubscriptionData();
-		subscriptionData.setRatePlanData(SubscriptionManager.getSubscriptionDataRatePlanFromCart(cartHelper));
+		try{
+			subscriptionData.setRatePlanData(SubscriptionManager.getSubscriptionDataRatePlanFromCart(cartHelper));
+		} catch (Exception e){
+			data.setSuccess(false);
+			data.setError(e.getMessage());
+			return data;
+		}
 		subscriptionData.setSubscription(subscription);
 		
 		// Create the subscription request
@@ -405,14 +415,19 @@ public class SubscriptionManager {
 		SubscribeResult[] resp = null;
 		try{
 			resp = zapi.zSubscribe(subscribes);
+			if(resp[0].getSuccess()){
+				data.setSubscriptionId(resp[0].getSubscriptionId());
+				data.setSuccess(true);
+			} else {
+				data.setError(resp[0].getErrors()[0].getMessage());
+				data.setSuccess(false);
+			}
 		} catch (Exception e){
 			data.setError(e.getMessage());
 			data.setSuccess(false);
 			return data;
 		}
-		
-		data.setSubscriptionId(resp[0].getSubscriptionId());
-		data.setSuccess(true);
+
 		return data;
 	}
 
@@ -447,7 +462,13 @@ public class SubscriptionManager {
 		// Set up subscription
 		Subscription subscription = SubscriptionManager.makeSubscription();
 		SubscriptionData subscriptionData = new SubscriptionData();
-		subscriptionData.setRatePlanData(SubscriptionManager.getSubscriptionDataRatePlanFromCart(cartHelper));
+		try{
+			subscriptionData.setRatePlanData(SubscriptionManager.getSubscriptionDataRatePlanFromCart(cartHelper));
+		} catch (Exception e){
+			preview.setSuccess(false);
+			preview.setError(e.getMessage());
+			return preview;
+		}
 		subscriptionData.setSubscription(subscription);
 
 		// Create the subscription request
@@ -516,8 +537,9 @@ public class SubscriptionManager {
 	 * @param cartHelper
 	 *            the current cart (from HttpSession and the web client)
 	 * @return RatePlanData for subscribe
+	 * @throws Exception 
 	 */
-	private static RatePlanData[] getSubscriptionDataRatePlanFromCart( CartHelper cartHelper) {
+	private static RatePlanData[] getSubscriptionDataRatePlanFromCart( CartHelper cartHelper) throws Exception {
 		// Create the return object
 		ArrayList<RatePlanData> rpds = new ArrayList<RatePlanData>();
 		
@@ -535,13 +557,42 @@ public class SubscriptionManager {
 			String productRatePlanId =  cartItem.getRatePlanId();
 			ratePlan.setProductRatePlanId(productRatePlanId);
 
-			// If there is price per quantity defined
-			// if (cartItem.getQuantity() != null && cartItem.getQuantity() !=1) {
-			// 		TODO
-			// }
+			// If there is price per quantity defined, set up RatePlanCharge data to override all quantities on this plan with the given amount
+			CatalogRatePlan crp = Catalog.getRatePlan(productRatePlanId);
+			if (crp.getQuantifiable()){
+				if(cartItem.getQuantity() == null){
+					throw new Exception("NULL_QTY");
+				}
+				BigDecimal bdQty = null;
+				try{
+					double qty = Double.parseDouble(cartItem.getQuantity());
+					bdQty = new BigDecimal(qty);
+				} catch (Exception e){
+					throw new Exception("PARSE_QTY_ERROR");
+				}
+					
+				ArrayList<RatePlanChargeData> rpcds = new ArrayList<RatePlanChargeData>();
+				ArrayList<CatalogCharge> ccharges = crp.getCharges();
+				for(CatalogCharge ccharge : ccharges){
+					if((ccharge.getChargeModel().equals("Per Unit Pricing") || ccharge.getChargeModel().equals("Tiered Pricing") || ccharge.getChargeModel().equals("Volume Pricing")) &&
+						!ccharge.getChargeType().equals("Usage"))
+					{
+						RatePlanChargeData rpcd = new RatePlanChargeData();
+						RatePlanCharge rpc = new RatePlanCharge();
+						rpc.setProductRatePlanChargeId(ccharge.getId());
+						rpc.setQuantity(bdQty);
+						rpcd.setRatePlanCharge(rpc);
+						rpcds.add(rpcd);
+					}
+				}
+				rpcds.trimToSize();
+				if(rpcds.size()>0){
+					RatePlanChargeData[] rpcdsA = rpcds.toArray(new RatePlanChargeData[rpcds.size()]);
+					ratePlanData.setRatePlanChargeData(rpcdsA);
+				}
+			}
 
-			// Add it to the current subscription data
-			
+			// Add this RatePlanData to the subscription data
 			rpds.add(ratePlanData);
 		}
 		rpds.trimToSize();

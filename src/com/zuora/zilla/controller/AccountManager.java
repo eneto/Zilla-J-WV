@@ -48,7 +48,9 @@ public class AccountManager {
 			}
 			acc = (Account) qresAcc.getRecords()[0];
 		} catch (Exception e) {
-			e.printStackTrace();
+			accountSummary.setSuccess(false);
+			accountSummary.setError("USER_DOESNT_EXIST");
+			return accountSummary;
 		}
 
 		//Get Account Information
@@ -61,7 +63,9 @@ public class AccountManager {
 		try {
 			paymentResult = zapi.zQuery("SELECT Amount,EffectiveDate,CreatedDate FROM Payment WHERE AccountId='" + acc.getId() + "'");
 		} catch (Exception e) {
-			e.printStackTrace();
+			accountSummary.setSuccess(false);
+			accountSummary.setError("PAYMENT_METHOD_DOESNT_EXIST");
+			return accountSummary;
 		}
 
 		if(paymentResult.getSize()==0){

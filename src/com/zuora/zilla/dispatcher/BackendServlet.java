@@ -43,8 +43,6 @@ public class BackendServlet extends HttpServlet {
 			App backend = new App();
 			if (type.equalsIgnoreCase("AddItemToCart")) {
 				output = backend.addItemToCart(request);
-			} else if (type.equalsIgnoreCase("AddRatePlan")) {
-				output = backend.addRatePlan(request);
 			} else if (type.equalsIgnoreCase("CheckEmailAvailability")) {
 				output = backend.checkEmailAvailability(request);
 			} else if (type.equalsIgnoreCase("EmptyCart")) {
@@ -84,12 +82,16 @@ public class BackendServlet extends HttpServlet {
 				request.getSession().invalidate();
 				response.sendRedirect("login.html");
 				
-			} else if (type.equalsIgnoreCase("PreviewAddRatePlan")) {
-				output = backend.previewAddRatePlan(request);
 			} else if (type.equalsIgnoreCase("PreviewCurrentCart")) {
 				output = backend.previewCurrentCart(request);
+			} else if (type.equalsIgnoreCase("PreviewAddRatePlan")) {
+				output = backend.previewAddRatePlan(request);
+			} else if (type.equalsIgnoreCase("AddRatePlan")) {
+				output = backend.addRatePlan(request);
 			} else if (type.equalsIgnoreCase("PreviewRemoveRatePlan")) {
-				
+				output = backend.previewRemoveRatePlan(request);
+			} else if (type.equalsIgnoreCase("RemoveRatePlan")) {
+				output = backend.removeRatePlan(request);				
 			} else if (type.equalsIgnoreCase("ReadCatalog")) {
 				output = backend.readCatalog();
 			} else if (type.equalsIgnoreCase("RefreshCatalog")) {
@@ -98,17 +100,12 @@ public class BackendServlet extends HttpServlet {
 				output = backend.removeItemFromCart(request);
 			} else if (type.equalsIgnoreCase("RemovePaymentMethod")) {
 				output = backend.removePaymentMethod(request);				
-			} else if (type.equalsIgnoreCase("RemoveRatePlan")) {
-				
 			} else if (type.equalsIgnoreCase("SubscribeWithCurrentCart")) {
 				output = backend.subscribeWithCurrentCart(request);
-				
 			} else if (type.equalsIgnoreCase("UpdateContact")) {
 				output = backend.updateContact(request);
 			} else if (type.equalsIgnoreCase("ChangeDefaultPaymentMethod")) {
 				output = backend.changeDefaultPaymentMethod(request);				
-			} else if (type.equalsIgnoreCase("UserLogin")) {
-				
 			} else if (type.equalsIgnoreCase("GetCompleteSummary")) {
 				output = backend.getCompleteSummary(request);
 			} else if (type.equalsIgnoreCase("GetPaymentMethodSummary")) {

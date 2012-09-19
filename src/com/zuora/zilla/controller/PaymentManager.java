@@ -34,7 +34,7 @@ public class PaymentManager {
 	 * 
 	 * @return New PaymentMethod URL
 	 */
-	public String getNewAccountUrl() {
+	public ResponseAction getNewAccountUrl() {
 		return generateUrl();
 	}
 
@@ -46,14 +46,17 @@ public class PaymentManager {
 	 * 
 	 * @return Existing PaymentMethod URL
 	 */
-	public String getExistingIframeSrc(String accountName) {
+	public ResponseAction getExistingIframeSrc(String accountName) {
+		ResponseAction resp = new ResponseAction();
 		String iframeUrl = null;
 
 		ZApi zapi = null;
 		try {
 			zapi = new ZApi();
 		} catch (Exception e){
-			return e.getMessage();
+			resp.setSuccess(false);
+			resp.setError(e.getMessage());
+			return resp;
 		}
 		
 		Contact contact = null;
@@ -72,12 +75,17 @@ public class PaymentManager {
 					+ "WHERE AccountId = '" + accountId + "'");
 			contact = (Contact) qresCon.getRecords()[0];
 		} catch (Exception e) {
-			e.printStackTrace();
+			resp.setSuccess(false);
+			resp.setError(e.getMessage());
+			return resp;
 		}
 
 		try {
 			// Get the base url
-			iframeUrl = generateUrl();
+			ResponseAction baseResp = generateUrl();
+			if(!baseResp.isSuccess())
+				return baseResp;
+			iframeUrl = baseResp.getData();
 			
 			// Append information from existing customer
 			iframeUrl += "&field_accountId=" + contact.getAccountId();
@@ -97,10 +105,15 @@ public class PaymentManager {
 			iframeUrl += (contact.getAddress2() != null) ? "&field_creditCardAddress2=" + contact.getAddress2() : "";
 			iframeUrl += (contact.getWorkPhone() != null) ? "&field_phone=" + contact.getWorkPhone() : "";
 			iframeUrl += (contact.getWorkEmail() != null) ? "&field_email=" + contact.getWorkEmail() : "";
+
+			resp.setSuccess(true);
+			resp.setData(iframeUrl);
 		} catch (Exception e) {
-			e.printStackTrace();
+			resp.setSuccess(false);
+			resp.setError(e.getMessage());
+			return resp;
 		}
-		return iframeUrl;
+		return resp;
 	}
 
 	/**
@@ -109,7 +122,9 @@ public class PaymentManager {
 	 * 
 	 * @return Base HPM URL
 	 */
-	private String generateUrl() {
+	private ResponseAction generateUrl() {		
+		ResponseAction resp = new ResponseAction();
+		
 		String iframeUrl = null;
 
 		// Get infos from properties file
@@ -164,12 +179,14 @@ public class PaymentManager {
 			iframeUrl = appUrl + "/apps/PublicHostedPaymentMethodPage.do?"
 					+ "method=requestPage&" + queryString + "&" + "signature="
 					+ hashedQueryStringBase64ed;
-
+			resp.setSuccess(true);
+			resp.setData(iframeUrl);
 		} catch (Exception e) {
-			e.printStackTrace();
+			resp.setSuccess(false);
+			resp.setError(e.getMessage());
 		}
 
-		return iframeUrl;
+		return resp;
 	}
 	
 	/**

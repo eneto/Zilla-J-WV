@@ -1,5 +1,5 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>Subscribe</title>
@@ -78,7 +78,8 @@
 	var displayNewIframe = function(){
 		$.getJSON("backend?type=GetNewIframeSrc",
 			function(data){
-				$("#z_hppm_iframe").attr('src', data.msg[0]);
+				var resp = data.msg[0];
+				$("#z_hppm_iframe").attr('src', resp.data);
         	}
 		);
 	}
@@ -108,7 +109,7 @@
 					var error = msg.error;
 					html += '<li>' + error + '</li>';
 					html += '</ul>';
-					$('.error_message').html(html);
+					$('#infor').html(html);
 					$("#infor").show();
 					displayNewIframe();
 				}
@@ -153,7 +154,7 @@
 			html = 'Your order was not submitted for the following reasons.<br /><ul>' + html;
 			html += '</ul>';
 		}
-		$('.error_message').html(html);
+		$('#infor').html(html);
 
 		$("#infor").show();
 		displayNewIframe();
@@ -161,6 +162,10 @@
 	
 	function formatErrorDisplay(errorField, prefix){
 		var result = '';
+		if(errorField==""){
+			return '';
+		}
+		
 		var displayError = errorField;
 		if(displayError=='NullValue') displayError = "Missing required field.";
 		if(errorField!=null && errorField!=''){

@@ -43,9 +43,6 @@ public class App extends HttpServlet {
 	/** The catalogCache filename */
 	public static final String CACHE_FILENAME = "catalogCache.txt";
 
-	/** List of errors that may occur during the process */
-	private List<String> errors;
-	
 	/** FIX: boolean if an array is already returned in the output.. */
 	private boolean array;
 
@@ -115,12 +112,18 @@ public class App extends HttpServlet {
 	 */
 	public String isUserLoggedIn(HttpServletRequest request) {
 		HttpSession session = request.getSession();
-		if (session.getAttribute("username") != null && !session.getAttribute("username").equals("")) {
-			return output(true);
-		} else {
-			errors.add("SESSION_NOT_SET");
-			return output(false);
+		ResponseAction resp = new ResponseAction();
+		try{
+			if (session.getAttribute("username") != null && !session.getAttribute("username").equals("")) {
+				resp.setSuccess(true);
+			} else {
+				resp.setSuccess(false);
+			}
+		} catch (Exception e){
+			resp.setSuccess(false);
+			resp.setError(e.getMessage());
 		}
+		return output(resp);
 	}
 	
 	
@@ -128,6 +131,7 @@ public class App extends HttpServlet {
 	 * Update a contact information.
 	 */
 	public String updateContact(HttpServletRequest request) {
+		//TODO This belongs in AccountManager 
 		
 		// Get the account name from the session
 		HttpSession session = request.getSession();
@@ -160,7 +164,6 @@ public class App extends HttpServlet {
 			return output(mapOutput);
 		}
 		
-		errors.add("UPDATE_FAILED");
 		return output(null);
 	}
 		
@@ -179,7 +182,7 @@ public class App extends HttpServlet {
 		}
 		
 		if (subscription == null) {
-			errors.add("SUBSCRIPTION_QUERY_FAILED");
+			//TODO This should have a response code that tells you whether it succeeded
 			return output(null);
 		}
 		
@@ -276,17 +279,17 @@ public class App extends HttpServlet {
 		if (request.getParameter("itemId") != null) {
 			itemId = Integer.parseInt(request.getParameter("itemId"));
 		} else {
-			errors.add("Item Id not specified.");
+			//TODO errors.add("Item Id not specified.");
 			return output(null);
 		}
 		
 		if (session.getAttribute("cart") != null) {
 			boolean removed = ((CartHelper) session.getAttribute("cart")).removeCartItem(itemId);
 			if (!removed) {
-				errors.add("Item no longer exists.");
+				//TODO errors.add("Item no longer exists.");
 			}
 		} else {
-			errors.add("Cart has not been set up.");
+			//TODO errors.add("Cart has not been set up.");
 			return output(null);
 		}
 		return output(session.getAttribute("cart"));
@@ -305,7 +308,7 @@ public class App extends HttpServlet {
 		
 		// Check if the Rate Plan Id exists in the request
 		if (request.getParameter("ratePlanId") == null) {
-			errors.add("Incorrect or missing Rate Plan ID in the request.");
+			//TODO errors.add("Incorrect or missing Rate Plan ID in the request.");
 			return output(null);
 		}
 		String ratePlanId =request.getParameter("ratePlanId");
@@ -320,7 +323,7 @@ public class App extends HttpServlet {
 			((CartHelper) session.getAttribute("cart")).addCartItem(ratePlanId, quantity);
 			
 		} else {
-			errors.add("Cart has not been set up.");
+			//TODO errors.add("Cart has not been set up.");
 			return output(null);
 		}
 		
@@ -359,15 +362,14 @@ public class App extends HttpServlet {
 	 * Return a new iframe URL containing the hosted page (for card information) URL.
 	 */
 	public String getNewIframeSrc() {
-		String iframeUrl=null;
+		ResponseAction iframeResp=null;
 		try {
-			iframeUrl = new PaymentManager().getNewAccountUrl();
+			iframeResp = new PaymentManager().getNewAccountUrl();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		this.array = false;
-		return output(iframeUrl);
+		return output(iframeResp);
 	}
 	
 	/**
@@ -376,15 +378,15 @@ public class App extends HttpServlet {
 	public String getExistingIframeSrc(HttpServletRequest request) {
 		HttpSession session = request.getSession();
 		String email = (String) session.getAttribute("username");
-		String iframeUrl=null;
+		ResponseAction iframeResp=null;
 		try {
-			iframeUrl = new PaymentManager().getExistingIframeSrc(email);
+			iframeResp = new PaymentManager().getExistingIframeSrc(email);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		this.array = false;
-		return output(iframeUrl);
+		
+		return output(iframeResp);
 	}
 	
 	/**
@@ -476,7 +478,7 @@ public class App extends HttpServlet {
 		}
 		
 		// Put the return (user e-mail address) in the session
-		session.setAttribute("email", userEmail);
+		session.setAttribute("username", userEmail);
 
 		data.setSuccess(true);
 		return output(data);
