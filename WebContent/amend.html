@@ -62,12 +62,11 @@
 		var html = "";
 		for(var i in msg.active_plans){
 			var pitem = msg.active_plans[i];
-			console.log(msg.active_plans);
 			html+="<li class='border_bottom_dashed'>";
             html+="  <div class='rateplan_info'>";
 			html+="    <span class='rateplan_name'>"+pitem.ProductName+"<br>"+pitem.Name+"</span><br>";
             html+="  </div>";
-            html+="  <a href='javascript:' class='btn_submit item_button floatRight btn_remove' id='remove_item_"+pitem.Id+"'>Remove</a><br>";
+            html+="  <a href='javascript:' class='btn_submit item_button floatRight btn_remove' id='remove_item_"+pitem.ID+"'>Remove</a><br>";
             /*
 			if(pitem.uom!=null){
 				html+="  <br>";
@@ -90,10 +89,11 @@
 		var html = "";
 		for(var i in msg.removed_plans){
 			var aitem = msg.removed_plans[i];
+			console.log(aitem);
 			html+="<div class='removed border_bottom_dashed'>";
             html+="    <div class='clear-block'></div>";
             html+="    <div class='rateplan_info'> <span class='rateplan_name'>"+aitem.ProductName+"<br>"+aitem.Name+"</span><br>";
-			if(aitem.uom!=null){
+			if(aitem.uom!=""){
 				html+="    <span class='rateplan_name'>"+aitem.uom+": <input type='text' disabled='true' id='update_field_"+aitem.Id+"' value='" +aitem.quantity+ "' /></span><br>";
 			}
             if(aitem.AmendmentType=='RemoveProduct')	
@@ -126,43 +126,37 @@
 		var itemId = buttonId.split('remove_item_')[1];
 		
 		$('.accept-amendment').data('rpId', itemId);
-		$.getJSON("backend?type=PreviewRemoveRatePlan",
+		$.getJSON("backend?type=PreviewRemoveRatePlan", {itemId: itemId},
 			function(data){
-				if(!data.success) {	addError(data.msg); }
-				else { 
-					var effectiveDate = data.msg[0];
-					var html = '';
-					html += 'Are you sure you would like to remove this product?<br><br>';
-					if(effectiveDate != null){
-						html += 'This change will be effective at the end of your current term:<br><br><b>' +effectiveDate.substring(0,10)+ '</b>';
-					}
-					$('.accept-amendment').show();
-					$('.cancel-amendment').show();
-					$('.amendment-detail').html(html);
-					$('.accept-amendment').click(function(){
-						$('.accept-amendment').unbind('click');
-						var itemId = $('.accept-amendment').data('rpId');
-						$('.accept-amendment').hide();
-						$('.cancel-amendment').hide();
-						$('.amendment-detail').html('Please Wait');
-						$.getJSON("backend?type=RemoveRatePlan", {itemId:itemId},
-							function(data){
-								$('.accept-change').slideUp('fast');	
-								if(!data.success) {	addError(data.msg); }
-								else {
-									getCurrentSubscription();
-								}
-							}
-						);
-						
-					});
-					$('.cancel-amendment').click(function(){
-						$('.accept-change').slideUp('fast');						
-					});
-					
-					$('.accept-change').slideDown('fast');
+				var msg = data.msg[0];
+				var html = '';
+				html += 'Are you sure you would like to remove this product?<br><br>';
+				if(msg.effectiveDate != null){
+					html += 'This change will be effective at the end of your current term:<br><br><b>' +formatUDate(msg.effectiveDate)+ '</b>';
 				}
-        	}
+				$('.accept-amendment').show();
+				$('.cancel-amendment').show();
+				$('.amendment-detail').html(html);
+				$('.accept-amendment').click(function(){
+					$('.accept-amendment').unbind('click');
+					var itemId = $('.accept-amendment').data('rpId');
+					$('.accept-amendment').hide();
+					$('.cancel-amendment').hide();
+					$('.amendment-detail').html('Please Wait');
+					$.getJSON("backend?type=RemoveRatePlan", {itemId:itemId},
+						function(data){
+							$('.accept-change').slideUp('fast');	
+							getCurrentSubscription();
+						}
+					);
+					
+				});
+				$('.cancel-amendment').click(function(){
+					$('.accept-change').slideUp('fast');						
+				});
+				
+				$('.accept-change').slideDown('fast');
+			}
 		);
 	};
 	
@@ -182,47 +176,40 @@
 		
 		$.getJSON("backend?type=PreviewAddRatePlan", {itemId:itemId, itemQty:itemQty},
 			function(data){
-				if(!data.success) {	alert(data.msg[0].msg); }
-				else { 
-					var total;
-					if(data.msg[0].results.InvoiceDatas!=undefined){
-						total = data.msg[0].results.InvoiceDatas.Invoice.Amount;
-					} else {
-						total = null;
-					}
-					var html = '';
-					html += 'Are you sure you would like to add this product?<br><br>';
-					if(total != null){
-						html += 'Your account will be charged an additional <b>$'+total+'</b> effective immediately.';
-					}
-					$('.accept-amendment').show();
-					$('.cancel-amendment').show();
-					$('.amendment-detail').html(html);
-					$('.accept-amendment').click(function(){
-						$('.accept-amendment').unbind('click');
-						var itemId = $('.accept-amendment').data('rpId');
-						var itemQty = $('.accept-amendment').data('qty');
-						$('.amendment-detail').html('Please Wait');
-						$('.accept-amendment').hide();
-						$('.cancel-amendment').hide();
-						$.getJSON("backend?type=AddRatePlan", {itemId:itemId, itemQty:itemQty},
-							function(data){
-								if(!data.success) {	alert(data.msg[0].msg); }
-								else { 
-									$('.accept-change').slideUp('fast');
-									getCurrentSubscription();
-								}
-							}
-						);
-						
-					});
-					$('.cancel-amendment').click(function(){
-						$('.accept-change').slideUp('fast');						
-					});
-					
-					$('.accept-change').slideDown('fast');
+				var msg = data.msg[0];
+				console.log(msg);
+				var total = msg.invoiceAmount;
+				var html = '';
+				html += 'Are you sure you would like to add this product?<br><br>';
+				if(total != null){
+					html += 'Your account will be charged an additional <b>$'+total+'</b> effective immediately.';
 				}
-        	}
+				$('.accept-amendment').show();
+				$('.cancel-amendment').show();
+				$('.amendment-detail').html(html);
+				$('.accept-amendment').click(function(){
+					$('.accept-amendment').unbind('click');
+					var itemId = $('.accept-amendment').data('rpId');
+					var itemQty = $('.accept-amendment').data('qty');
+					$('.amendment-detail').html('Please Wait');
+					$('.accept-amendment').hide();
+					$('.cancel-amendment').hide();
+					$.getJSON("backend?type=AddRatePlan", {itemId:itemId, itemQty:itemQty},
+						function(data2){
+						var msg = data2.msg[0];
+						console.log(msg);
+							$('.accept-change').slideUp('fast');
+							getCurrentSubscription();
+						}
+					);
+					
+				});
+				$('.cancel-amendment').click(function(){
+					$('.accept-change').slideUp('fast');						
+				});
+				
+				$('.accept-change').slideDown('fast');
+			}
 		);
 	};
 

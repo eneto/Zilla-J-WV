@@ -200,7 +200,7 @@ public class SubscriptionManager {
 						QueryResult productRatePlanResult = zapi.zQuery("SELECT Description,ProductId FROM ProductRatePlan WHERE Id='" + rp.getProductRatePlanId() + "'");
 						ProductRatePlan curPrp = (ProductRatePlan) productRatePlanResult.getRecords()[0];
 						
-						QueryResult productResult = zapi.zQuery("SELECT Description,ProductId FROM Product WHERE Id='" + curPrp.getProductId() + "'");
+						QueryResult productResult = zapi.zQuery("SELECT Name,Description,Id FROM Product WHERE Id='" + curPrp.getProductId() + "'");
 						Product curProd = (Product) productResult.getRecords()[0];
 	
 						newPlan.setDescription((curPrp.getDescription() != null) ? curPrp.getDescription() : "");

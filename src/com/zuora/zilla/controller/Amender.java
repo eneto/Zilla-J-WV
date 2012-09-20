@@ -74,23 +74,32 @@ public class Amender {
 		rpd.setRatePlan(rp);
 		amendment.setRatePlanData(rpd);
 
-		//If a quantity has been passed, specify charge data to cover all quantifiable charges on the rate plan being added
+		// If there is price per quantity defined, set up RatePlanCharge data to override all quantities on this plan with the given amount
 		if (qty != null) {
-			ArrayList<RatePlanChargeData> listRpcd = new ArrayList<RatePlanChargeData>();
-			ArrayList<CatalogCharge> charges = Catalog.getRatePlan(prpId).getCharges();
-			for(CatalogCharge charge : charges){
-				if (charge.getChargeModel() == "Per Unit Pricing" || charge.getChargeModel() == "Tiered Pricing" || charge.getChargeModel() == "Volume Pricing") {
-					RatePlanCharge rpc = new RatePlanCharge();
-					rpc.setProductRatePlanChargeId(charge.getId());
-					rpc.setQuantity(qty);
-					RatePlanChargeData rpcd = new RatePlanChargeData();
-					rpcd.setRatePlanCharge(rpc);
-					listRpcd.add(rpcd);
+			CatalogRatePlan crp = Catalog.getRatePlan(prpId);
+			if (crp.getQuantifiable()){
+				ArrayList<RatePlanChargeData> rpcds = new ArrayList<RatePlanChargeData>();
+				ArrayList<CatalogCharge> ccharges = crp.getCharges();
+				for(CatalogCharge ccharge : ccharges){
+					if((ccharge.getChargeModel().equals("Per Unit Pricing") || ccharge.getChargeModel().equals("Tiered Pricing") || ccharge.getChargeModel().equals("Volume Pricing")) &&
+						!ccharge.getChargeType().equals("Usage"))
+					{
+						RatePlanChargeData rpcd = new RatePlanChargeData();
+						RatePlanCharge rpc = new RatePlanCharge();
+						rpc.setProductRatePlanChargeId(ccharge.getId());
+						rpc.setQuantity(qty);
+						rpcd.setRatePlanCharge(rpc);
+						rpcds.add(rpcd);
+					}
+				}
+				rpcds.trimToSize();
+				if(rpcds.size()>0){
+					RatePlanChargeData[] rpcdsA = rpcds.toArray(new RatePlanChargeData[rpcds.size()]);
+					rpd.setRatePlanChargeData(rpcdsA);
 				}
 			}
-			rpd.setRatePlanChargeData((RatePlanChargeData[]) listRpcd.toArray());
 		}
-
+		
 		AmendOptions ao = new AmendOptions();
 		ao.setGenerateInvoice(true);
 		ao.setProcessPayments(false);
@@ -140,6 +149,7 @@ public class Amender {
 	 */
 	public AmenderResult removeRatePlan(String accountName, String rpId, boolean preview) {
 	
+		AmenderResult amRes = new AmenderResult();
 		SubscriptionManager subManager = null;
 		try {
 			subManager = new SubscriptionManager();
@@ -151,6 +161,12 @@ public class Amender {
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 		df.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
 		Calendar endOfCycle = subscription.getEndOfTermDate();
+		
+		if(preview){
+			amRes.setEffectiveDate(endOfCycle);
+			amRes.setSuccess(true);
+			return amRes;
+		}
 		
 		Amendment amendment = new Amendment();
 		

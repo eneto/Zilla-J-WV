@@ -38,7 +38,7 @@ public class ZApi {
 	 * Creating a new zApi instance will log in using a SOAP login call, and will generate a session header which can be used for subsequent API calls. If the credentials set up in config.php are invalid, the instantiation of the class will throw an exception.
 	 */
 	public ZApi (){
-		try {		
+		try {
 			//Get the user's credentials
 			ZuoraUtility utility = new ZuoraUtility();
 			String username = utility.getPropertyValue(PROPERTY_USERNAME);

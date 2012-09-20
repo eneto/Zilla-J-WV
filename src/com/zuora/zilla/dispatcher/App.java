@@ -226,13 +226,24 @@ public class App extends HttpServlet {
 	 */
 	public String addRatePlan(HttpServletRequest request) {
 		HttpSession session = request.getSession();
+		AmenderResult amRes = null;
 		String username = (String) session.getAttribute("username");
 		String ratePlanId =request.getParameter("itemId");
 		String qty =request.getParameter("itemQty");
-		AmenderResult amRes = null;
+		BigDecimal bdQty = null;
+		if(!qty.equals("null")){
+			try{
+				bdQty = new BigDecimal(qty);
+			} catch (Exception e){
+				amRes = new AmenderResult();
+				amRes.setSuccess(false);
+				amRes.setError("INVALID_QTY");
+				return output(amRes);
+			}
+		}
 		try{
 			Amender amender = new Amender();
-			amRes = amender.addRatePlan(username, ratePlanId, new BigDecimal(qty), false);			
+			amRes = amender.addRatePlan(username, ratePlanId, bdQty, false);			
 		} catch (Exception e){
 			amRes = new AmenderResult();
 			amRes.setSuccess(false);
@@ -246,13 +257,24 @@ public class App extends HttpServlet {
 	 */
 	public String previewAddRatePlan(HttpServletRequest request) {
 		HttpSession session = request.getSession();
+		AmenderResult amRes = null;
 		String username = (String) session.getAttribute("username");
 		String ratePlanId =request.getParameter("itemId");
 		String qty =request.getParameter("itemQty");
-		AmenderResult amRes = null;
+		BigDecimal bdQty = null;
+		if(!qty.equals("null")){
+			try{
+				bdQty = new BigDecimal(qty);
+			} catch (Exception e){
+				amRes = new AmenderResult();
+				amRes.setSuccess(false);
+				amRes.setError("INVALID_QTY");
+				return output(amRes);
+			}
+		}
 		try{
 			Amender amender = new Amender();
-			amRes = amender.addRatePlan(username, ratePlanId, new BigDecimal(qty), true);			
+			amRes = amender.addRatePlan(username, ratePlanId, bdQty, true);			
 		} catch (Exception e){
 			amRes = new AmenderResult();
 			amRes.setSuccess(false);
