@@ -2,7 +2,7 @@ package com.zuora.zilla.model;
 
 import java.util.ArrayList;
 
-public class CatalogModel implements java.io.Serializable {
+public class CatalogModel {
 	 ArrayList<CatalogGroup> catalogGroups;
 
 	public ArrayList<CatalogGroup> getCatalogGroups() {

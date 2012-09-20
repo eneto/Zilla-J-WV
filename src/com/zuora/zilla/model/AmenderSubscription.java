@@ -7,6 +7,9 @@ import org.codehaus.jackson.annotate.JsonProperty;
 
 public class AmenderSubscription {
 
+	private boolean success;
+	private String error;
+	
 	private String userEmail;
 	private String subscriptionId;
 	private Integer version;
@@ -14,6 +17,22 @@ public class AmenderSubscription {
 	private List<AmenderPlan> removedPlans;
 	private Calendar endOfTermDate;
 	private String startDate;
+	
+	public boolean isSuccess() {
+		return success;
+	}
+
+	public void setSuccess(boolean success) {
+		this.success = success;
+	}
+
+	public String getError() {
+		return error;
+	}
+
+	public void setError(String error) {
+		this.error = error;
+	}
 
 	public String getUserEmail() {
 		return userEmail;

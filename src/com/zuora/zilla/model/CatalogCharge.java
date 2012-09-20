@@ -2,7 +2,7 @@ package com.zuora.zilla.model;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 
-public class CatalogCharge implements java.io.Serializable {
+public class CatalogCharge {
 
 	private String id;
 	private String name = "";

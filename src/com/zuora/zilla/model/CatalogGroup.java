@@ -1,11 +1,10 @@
 package com.zuora.zilla.model;
 
 import java.util.ArrayList;
-import java.util.Vector;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 
-public class CatalogGroup implements java.io.Serializable {
+public class CatalogGroup {
 
 	private String name = "";
 	private ArrayList<CatalogProduct> products;

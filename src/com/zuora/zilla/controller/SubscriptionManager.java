@@ -1,15 +1,12 @@
 package com.zuora.zilla.controller;
 
-import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.rmi.RemoteException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.TimeZone;
 
 import com.zuora.api.*;
@@ -47,6 +44,10 @@ public class SubscriptionManager {
 	 * @return Active Subscription details
 	 */
 	public AmenderSubscription getCurrentSubscription(String accountName) {
+		// Get Active Subscription
+		AmenderSubscription activeSubscription = new AmenderSubscription();
+
+		
 		// Step #1: get the associated account Id
 		String accountId = null;
 
@@ -54,14 +55,10 @@ public class SubscriptionManager {
 			QueryResult qresAcc = zapi.zQuery("SELECT Id FROM Account WHERE Name='" + accountName + "'");
 			accountId = qresAcc.getRecords()[0].getId();
 		} catch (Exception e) {
-			e.printStackTrace();
+			activeSubscription.setSuccess(false);
+			activeSubscription.setError("ACCOUNT_DOESNT_EXIST");
+			return activeSubscription;
 		}
-		
-		if (accountId == null)
-			return null; // ACCOUNT_DOES_NOT_EXIST
-		
-		// Get Active Subscription
-		AmenderSubscription activeSubscription = new AmenderSubscription();
 		
 		QueryResult qresLastSub = null;
 		try {
@@ -69,13 +66,18 @@ public class SubscriptionManager {
 					+ "ContractEffectiveDate,TermStartDate FROM Subscription WHERE AccountId='"
 					+ accountId + "' AND Status='Active'");
 		} catch (Exception e) {
-			e.printStackTrace();
+			activeSubscription.setSuccess(false);
+			activeSubscription.setError(e.getMessage());
+			return activeSubscription;
+		}
+		
+		if(qresLastSub.getSize()==0){
+			activeSubscription.setSuccess(false);
+			activeSubscription.setError("SUBSCRIPTION_DOESNT_EXIST");
+			return activeSubscription;
 		}
 		
 		try {
-			if (qresLastSub.getSize() == 0)
-				return null; // SUBSCRIPTION_DOES_NOT_EXIST
-			
 			Subscription subscription = (Subscription) qresLastSub.getRecords()[0];
 			
 			activeSubscription.setUserEmail(accountName);
@@ -97,73 +99,80 @@ public class SubscriptionManager {
 			try {
 				activeResult = zapi.zQuery("SELECT Id,Name,ProductRatePlanId FROM RatePlan WHERE SubscriptionId='" + activeSubscription.getSubscriptionId() + "'");
 			} catch (Exception e) {
-				e.printStackTrace();
+				activeSubscription.setSuccess(false);
+				activeSubscription.setError(e.getMessage());
+				return activeSubscription;
 			}
 			
-			// Loop through all the rate plan
-			for (ZObject zObj : activeResult.getRecords()) {
-				// Cast
-				RatePlan rp = (RatePlan) zObj;
-				
-				AmenderPlan newPlan = new AmenderPlan();
-				
-				newPlan.setId(rp.getId());
-				newPlan.setName(rp.getName());
-				
-				// Get product name
-				try {
-					QueryResult productRatePlanResult = zapi.zQuery("SELECT Description,ProductId FROM ProductRatePlan WHERE Id='" + rp.getProductRatePlanId() + "'");
-					ProductRatePlan curPrp = (ProductRatePlan) productRatePlanResult.getRecords()[0];
+			if(activeResult.getSize()>0){
+				// Loop through all the rate plan
+				for (ZObject zObj : activeResult.getRecords()) {
+					// Cast
+					RatePlan rp = (RatePlan) zObj;
 					
-					QueryResult productResult = zapi.zQuery("SELECT Id,Name FROM Product WHERE Id='" + curPrp.getProductId() + "'");
-					Product curProd = (Product) productResult.getRecords()[0];
-
-					newPlan.setDescription((curPrp.getDescription() != null) ? curPrp.getDescription() : "");
-					newPlan.setProductName(curProd.getName());
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				
-				// Get all charges
-				List<AmenderCharge> charges = new ArrayList<AmenderCharge>();
-
-				QueryResult chargesResult = null;
-				try {
-					chargesResult = zapi.zQuery("SELECT Id,Name,ProductRatePlanChargeId,ChargeModel,ChargeType,UOM,Quantity,ChargedThroughDate " +
-							"FROM RatePlanCharge WHERE RatePlanId='" + rp.getId() + "'");
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				for (ZObject z2 : chargesResult.getRecords()) {
-					RatePlanCharge rpc = (RatePlanCharge) z2;
-					AmenderCharge newCharge = new AmenderCharge();
+					AmenderPlan newPlan = new AmenderPlan();
 					
-					newCharge.setId(rpc.getId());
-					newCharge.setName(rpc.getName());
-					newCharge.setChargeModel(rpc.getChargeModel());
-					newCharge.setProductRatePlanChargeId(rpc.getProductRatePlanChargeId());
+					newPlan.setId(rp.getId());
+					newPlan.setName(rp.getName());
 					
-					if (!rpc.getChargeModel().equals("Flat Fee Pricing")) {
-						// TODO Also exlude usage charges
-						newPlan.setUom(rpc.getUOM());
-						newPlan.setQuantity(rpc.getQuantity().toPlainString());
-						newCharge.setUom(rpc.getUOM());
-						newCharge.setQuantity(rpc.getQuantity().toPlainString());
+					// Get product name
+					try {
+						QueryResult productRatePlanResult = zapi.zQuery("SELECT Description,ProductId FROM ProductRatePlan WHERE Id='" + rp.getProductRatePlanId() + "'");
+						ProductRatePlan curPrp = (ProductRatePlan) productRatePlanResult.getRecords()[0];
+						
+						QueryResult productResult = zapi.zQuery("SELECT Id,Name FROM Product WHERE Id='" + curPrp.getProductId() + "'");
+						Product curProd = (Product) productResult.getRecords()[0];
+	
+						newPlan.setDescription((curPrp.getDescription() != null) ? curPrp.getDescription() : "");
+						newPlan.setProductName(curProd.getName());
+					} catch (Exception e) {
+						activeSubscription.setSuccess(false);
+						activeSubscription.setError(e.getMessage());
+						return activeSubscription;
 					}
 					
-					// For all charges, find maximum ChargedThroughDate
-					if (rpc.getChargedThroughDate() != null) {
-						if (rpc.getChargedThroughDate().compareTo(Calendar.getInstance()) > 0) {
-							activeSubscription.setEndOfTermDate(rpc.getChargedThroughDate());
+					// Get all charges
+					List<AmenderCharge> charges = new ArrayList<AmenderCharge>();
+	
+					QueryResult chargesResult = null;
+					try {
+						chargesResult = zapi.zQuery("SELECT Id,Name,ProductRatePlanChargeId,ChargeModel,ChargeType,UOM,Quantity,ChargedThroughDate " +
+								"FROM RatePlanCharge WHERE RatePlanId='" + rp.getId() + "'");
+					} catch (Exception e) {
+						activeSubscription.setSuccess(false);
+						activeSubscription.setError(e.getMessage());
+						return activeSubscription;
+					}
+					for (ZObject z2 : chargesResult.getRecords()) {
+						RatePlanCharge rpc = (RatePlanCharge) z2;
+						AmenderCharge newCharge = new AmenderCharge();
+						
+						newCharge.setId(rpc.getId());
+						newCharge.setName(rpc.getName());
+						newCharge.setChargeModel(rpc.getChargeModel());
+						newCharge.setProductRatePlanChargeId(rpc.getProductRatePlanChargeId());
+						
+						if (!rpc.getChargeModel().equals("Flat Fee Pricing") && !rpc.getChargeType().equals("Usage")) {
+							newPlan.setUom(rpc.getUOM());
+							newPlan.setQuantity(rpc.getQuantity().toPlainString());
+							newCharge.setUom(rpc.getUOM());
+							newCharge.setQuantity(rpc.getQuantity().toPlainString());
 						}
+						
+						// For all charges, find maximum ChargedThroughDate
+						if (rpc.getChargedThroughDate() != null) {
+							if (rpc.getChargedThroughDate().compareTo(Calendar.getInstance()) > 0) {
+								activeSubscription.setEndOfTermDate(rpc.getChargedThroughDate());
+							}
+						}
+						
+						charges.add(newCharge);
 					}
 					
-					charges.add(newCharge);
+					newPlan.setAmenderCharges(charges);
+					activePlans.add(newPlan);
+					
 				}
-				
-				newPlan.setAmenderCharges(charges);
-				activePlans.add(newPlan);
-				
 			}
 			
 			// Get removed rate plan
@@ -173,95 +182,95 @@ public class SubscriptionManager {
 				removedPlanResult = zapi.zQuery("SELECT Id,Name,AmendmentType,AmendmentId,ProductRatePlanId FROM RatePlan " +
 						"WHERE SubscriptionId='" + activeSubscription.getSubscriptionId() + "' AND AmendmentType='RemoveProduct'");
 			} catch (Exception e) {
-				e.printStackTrace();
+				activeSubscription.setSuccess(false);
+				activeSubscription.setError(e.getMessage());
+				return activeSubscription;
 			}
-			for (ZObject z3 : removedPlanResult.getRecords()) {
-				// Cast
-				RatePlan rp = (RatePlan) z3;
-				
-				// TODO clean this..
-				if (rp == null)
-					continue;
-				
-				AmenderPlan newPlan = new AmenderPlan();
-				
-				newPlan.setId(rp.getId());
-				newPlan.setName(rp.getName());
-				
-				// Get product name
-				try {
-					QueryResult productRatePlanResult = zapi.zQuery("SELECT Description,ProductId FROM ProductRatePlan WHERE Id='" + rp.getProductRatePlanId() + "'");
-					ProductRatePlan curPrp = (ProductRatePlan) productRatePlanResult.getRecords()[0];
+			if(removedPlanResult.getSize()>0){
+				for (ZObject z3 : removedPlanResult.getRecords()) {
+					// Cast
+					RatePlan rp = (RatePlan) z3;
 					
-					QueryResult productResult = zapi.zQuery("SELECT Description,ProductId FROM Product WHERE Id='" + curPrp.getProductId() + "'");
-					Product curProd = (Product) productResult.getRecords()[0];
+					AmenderPlan newPlan = new AmenderPlan();
+					newPlan.setId(rp.getId());
+					newPlan.setName(rp.getName());
 
-					newPlan.setDescription((curPrp.getDescription() != null) ? curPrp.getDescription() : "");
-					newPlan.setProductName(curProd.getName());
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				
-				newPlan.setAmendmentId(rp.getAmendmentId());
-				newPlan.setAmendmentType(rp.getAmendmentType());
-				newPlan.setEffectiveDate("end of current billing period.");
-				
-				// Query amendment for this rate plan to get Effective Removal Date
-				try {
-					QueryResult amdResult = zapi.zQuery("SELECT Id,ContractEffectiveDate FROM Amendment WHERE Id='" + newPlan.getAmendmentId() + "'");
-					Amendment amd = (Amendment) amdResult.getRecords()[0];
-					newPlan.setEffectiveDate(dateFormat.format(amd.getContractEffectiveDate().getTime()));
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				
-				// Get all charges
-				List<AmenderCharge> charges = new ArrayList<AmenderCharge>();
-				QueryResult chargesResult = null;
-				try {
-					chargesResult = zapi.zQuery("SELECT Id,Name,ProductRatePlanChargeId,ChargeModel,ChargeType,UOM,Quantity,ChargedThroughDate " +
-							"FROM RatePlanCharge WHERE RatePlanId='" + rp.getId() + "'");
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				for (ZObject z2 : chargesResult.getRecords()) {
-					RatePlanCharge rpc = (RatePlanCharge) z2;
-					AmenderCharge newCharge = new AmenderCharge();
-					
-					newCharge.setId(rpc.getId());
-					newCharge.setName(rpc.getName());
-					newCharge.setChargeModel(rpc.getChargeModel());
-					newCharge.setProductRatePlanChargeId(rpc.getProductRatePlanChargeId());
-					
-					if (!rpc.getChargeModel().equals("Flat Fee Pricing")) {
-						// TODO Also exclude usage charges
-						newPlan.setUom(rpc.getUOM());
-						newPlan.setQuantity(rpc.getQuantity().toPlainString());
-						newCharge.setUom(rpc.getUOM());
-						newCharge.setQuantity(rpc.getQuantity().toPlainString());
+					// Get product name
+					try {
+						QueryResult productRatePlanResult = zapi.zQuery("SELECT Description,ProductId FROM ProductRatePlan WHERE Id='" + rp.getProductRatePlanId() + "'");
+						ProductRatePlan curPrp = (ProductRatePlan) productRatePlanResult.getRecords()[0];
+						
+						QueryResult productResult = zapi.zQuery("SELECT Description,ProductId FROM Product WHERE Id='" + curPrp.getProductId() + "'");
+						Product curProd = (Product) productResult.getRecords()[0];
+	
+						newPlan.setDescription((curPrp.getDescription() != null) ? curPrp.getDescription() : "");
+						newPlan.setProductName(curProd.getName());
+					} catch (Exception e) {
+						activeSubscription.setSuccess(false);
+						activeSubscription.setError(e.getMessage());
 					}
 					
-					// For all charges, find maximum ChargedThroughDate
-					if (rpc.getChargedThroughDate() != null) {
-						if (rpc.getChargedThroughDate().compareTo(Calendar.getInstance()) > 0) {
-							activeSubscription.setEndOfTermDate(rpc.getChargedThroughDate());
+					newPlan.setAmendmentId(rp.getAmendmentId());
+					newPlan.setAmendmentType(rp.getAmendmentType());
+					newPlan.setEffectiveDate("end of current billing period.");
+					
+					// Query amendment for this rate plan to get Effective Removal Date
+					try {
+						QueryResult amdResult = zapi.zQuery("SELECT Id,ContractEffectiveDate FROM Amendment WHERE Id='" + newPlan.getAmendmentId() + "'");
+						Amendment amd = (Amendment) amdResult.getRecords()[0];
+						newPlan.setEffectiveDate(dateFormat.format(amd.getContractEffectiveDate().getTime()));
+					} catch (Exception e) {
+						activeSubscription.setSuccess(false);
+						activeSubscription.setError(e.getMessage());
+						return activeSubscription;
+					}
+
+					// Get all charges
+					List<AmenderCharge> charges = new ArrayList<AmenderCharge>();
+					QueryResult chargesResult = null;
+					try {
+						chargesResult = zapi.zQuery("SELECT Id,Name,ProductRatePlanChargeId,ChargeModel,ChargeType,UOM,Quantity,ChargedThroughDate " +
+								"FROM RatePlanCharge WHERE RatePlanId='" + rp.getId() + "'");
+					} catch (Exception e) {
+						activeSubscription.setSuccess(false);
+						activeSubscription.setError(e.getMessage());
+					}
+					for (ZObject z2 : chargesResult.getRecords()) {
+						RatePlanCharge rpc = (RatePlanCharge) z2;
+						AmenderCharge newCharge = new AmenderCharge();
+
+						newCharge.setId(rpc.getId());
+						newCharge.setName(rpc.getName());
+						newCharge.setChargeModel(rpc.getChargeModel());
+						newCharge.setProductRatePlanChargeId(rpc.getProductRatePlanChargeId());
+						
+						if (!rpc.getChargeModel().equals("Flat Fee Pricing") && rpc.getChargeType()!="Usage") {
+							newPlan.setUom(rpc.getUOM());
+							newPlan.setQuantity(rpc.getQuantity().toPlainString());
+							newCharge.setUom(rpc.getUOM());
+							newCharge.setQuantity(rpc.getQuantity().toPlainString());
 						}
+						
+						// For all charges, find maximum ChargedThroughDate
+						if (rpc.getChargedThroughDate() != null) {
+							if (rpc.getChargedThroughDate().compareTo(Calendar.getInstance()) > 0) {
+								activeSubscription.setEndOfTermDate(rpc.getChargedThroughDate());
+							}
+						}
+						charges.add(newCharge);
 					}
-					
-					charges.add(newCharge);
+					removedPlans.add(newPlan);					
 				}
-				
-				removedPlans.add(newPlan);
-				
 			}
-			
+
 			activeSubscription.setActivePlans(activePlans);
 			activeSubscription.setRemovedPlans(removedPlans);
-			
 		} catch (Exception e) {
-			e.printStackTrace();
+			activeSubscription.setSuccess(false);
+			activeSubscription.setError(e.getMessage());
 		}
 		
+		activeSubscription.setSuccess(true);
 		return activeSubscription;
 	}
 

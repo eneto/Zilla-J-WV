@@ -1,12 +1,10 @@
 package com.zuora.zilla.model;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Vector;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 
-public class CatalogRatePlan implements java.io.Serializable  {
+public class CatalogRatePlan {
 
 	private String id;
 	private String name = "";

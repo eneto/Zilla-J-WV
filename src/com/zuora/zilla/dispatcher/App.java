@@ -226,8 +226,19 @@ public class App extends HttpServlet {
 	 */
 	public String addRatePlan(HttpServletRequest request) {
 		HttpSession session = request.getSession();
-		// TODO
-		return output(null);
+		String username = (String) session.getAttribute("username");
+		String ratePlanId =request.getParameter("itemId");
+		String qty =request.getParameter("itemQty");
+		AmenderResult amRes = null;
+		try{
+			Amender amender = new Amender();
+			amRes = amender.addRatePlan(username, ratePlanId, new BigDecimal(qty), false);			
+		} catch (Exception e){
+			amRes = new AmenderResult();
+			amRes.setSuccess(false);
+			amRes.setError(e.getMessage());
+		}
+		return output(amRes);
 	}
 	
 	/**
@@ -235,8 +246,19 @@ public class App extends HttpServlet {
 	 */
 	public String previewAddRatePlan(HttpServletRequest request) {
 		HttpSession session = request.getSession();
-		// TODO
-		return output(null);
+		String username = (String) session.getAttribute("username");
+		String ratePlanId =request.getParameter("itemId");
+		String qty =request.getParameter("itemQty");
+		AmenderResult amRes = null;
+		try{
+			Amender amender = new Amender();
+			amRes = amender.addRatePlan(username, ratePlanId, new BigDecimal(qty), true);			
+		} catch (Exception e){
+			amRes = new AmenderResult();
+			amRes.setSuccess(false);
+			amRes.setError(e.getMessage());
+		}
+		return output(amRes);
 	}
 	
 	/**
@@ -244,8 +266,18 @@ public class App extends HttpServlet {
 	 */
 	public String removeRatePlan(HttpServletRequest request) {
 		HttpSession session = request.getSession();
-		// TODO
-		return output(null);
+		String username = (String) session.getAttribute("username");
+		String ratePlanId =request.getParameter("itemId");
+		AmenderResult amRes = null;
+		try{
+			Amender amender = new Amender();
+			amRes = amender.removeRatePlan(username, ratePlanId, false);
+		} catch (Exception e){
+			amRes = new AmenderResult();
+			amRes.setSuccess(false);
+			amRes.setError(e.getMessage());
+		}
+		return output(amRes);
 	}
 	
 	/**
@@ -253,8 +285,18 @@ public class App extends HttpServlet {
 	 */
 	public String previewRemoveRatePlan(HttpServletRequest request) {
 		HttpSession session = request.getSession();
-		// TODO
-		return output(null);
+		String username = (String) session.getAttribute("username");
+		String ratePlanId =request.getParameter("itemId");
+		AmenderResult amRes = null;
+		try{
+			Amender amender = new Amender();
+			amRes = amender.removeRatePlan(username, ratePlanId, true);
+		} catch (Exception e){
+			amRes = new AmenderResult();
+			amRes.setSuccess(false);
+			amRes.setError(e.getMessage());
+		}
+		return output(amRes);
 	}
 
 	/**

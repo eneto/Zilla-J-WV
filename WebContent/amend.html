@@ -25,9 +25,8 @@
 					getCurrentSubscription();
 			
 					$.getJSON("backend?type=ReadCatalog",
-						function(data){
-							if(!data.success) {	addError(data.msg); }
-							else { listProducts(data.msg); }
+						function(data2){
+							listProducts(data2.msg);
 			        	}
 					);
 				}
@@ -46,8 +45,7 @@
 		$("#loading").show('fast');
 		$.getJSON("backend?type=GetLatestSubscription",
 			function(data){
-				if(!data.success) {	addError(data.msg); }
-				else { loadPlan(data.msg); }
+				loadPlan(data.msg[0]);
         	}
 		);
 		$(".chosen_plans").html("Loading Subscription");
@@ -58,12 +56,13 @@
 		$("#loading").fadeOut('fast');
 		
 		//Set Email
-		$("#user_email").html("("+msg[0].userEmail+")");
+		$("#user_email").html("("+msg.userEmail+")");
 
 		//Set Current Plans
 		var html = "";
-		for(var i in msg[0].active_plans){
-			var pitem = msg[0].active_plans[i];
+		for(var i in msg.active_plans){
+			var pitem = msg.active_plans[i];
+			console.log(msg.active_plans);
 			html+="<li class='border_bottom_dashed'>";
             html+="  <div class='rateplan_info'>";
 			html+="    <span class='rateplan_name'>"+pitem.ProductName+"<br>"+pitem.Name+"</span><br>";
@@ -89,8 +88,8 @@
 
 		//Show Removed Rateplans
 		var html = "";
-		for(var i in msg[0].removed_plans){
-			var aitem = msg[0].removed_plans[i];
+		for(var i in msg.removed_plans){
+			var aitem = msg.removed_plans[i];
 			html+="<div class='removed border_bottom_dashed'>";
             html+="    <div class='clear-block'></div>";
             html+="    <div class='rateplan_info'> <span class='rateplan_name'>"+aitem.ProductName+"<br>"+aitem.Name+"</span><br>";
@@ -106,7 +105,7 @@
             html+="</div>";
 		}
 		$(".amendment_list").html(html);
-		if(msg[0].removed_plans.length>0){
+		if(msg.removed_plans.length>0){
 			$('.upcoming-changes').show();
 		} else {
 			$('.upcoming-changes').hide();
@@ -239,7 +238,6 @@
 		$.getJSON("backend?type=PreviewUpdateRatePlan", {itemId:itemId, itemQty:itemQty},
 			function(data){
 				var updRes = data.msg[0];
-				console.log(updRes);
 				var html = '';
 				var itemId = $('.accept-amendment').data('rpId');
 				var itemQty = $('.accept-amendment').data('qty');
@@ -266,7 +264,6 @@
 							}
 						}
 					);
-					
 				});
 				$('.cancel-amendment').click(function(){
 					$('.accept-change').slideUp('fast');						
@@ -301,7 +298,7 @@
 					var rp = prod.ratePlans[rpKey];
 					html += "        <li class='border_bottom_dashed'><span class='clear-block'></span>";
 					html += "          <div class='rateplan_info' >";
-					html += "           <span class='rateplan_name'>"+rp.Name+"</span><br>";
+					html += "           <span class='rateplan_name'>"+rp.productName+" : "+rp.Name+"</span><br>";
 					html += "          	<span class='rateplan_description'>"+rp.Description+"</span> ";
 					if(rp.quantifiable)
 						html += "		<br># "+ rp.Uom +": <input type='text' class='w80' id='qty_"+rp.Id+"' value='1' onkeypress='return isNumberKey(event)' />";
@@ -319,7 +316,6 @@
 			html += "    </ul>";
 			html += "  </div>";
 		}
-
 		$(".left-main.inner").append(html);
 		$(".btn_add").click(function(event){
 			addToPlan(event);

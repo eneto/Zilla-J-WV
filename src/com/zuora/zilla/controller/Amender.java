@@ -1,15 +1,11 @@
 package com.zuora.zilla.controller;
 
 import java.math.BigDecimal;
-import java.security.MessageDigest;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Map;
-import java.util.Random;
 import java.util.TimeZone;
-import java.util.Vector;
 
 import com.zuora.api.*;
 import com.zuora.api.object.*;
@@ -31,7 +27,7 @@ public class Amender {
 		try {
 			zapi = new ZApi();
 		} catch (Exception e) {
-			throw new Exception("Invalid Login");
+			throw new Exception("INVALID_LOGIN");
 		}
 	}
 	
@@ -81,13 +77,7 @@ public class Amender {
 		//If a quantity has been passed, specify charge data to cover all quantifiable charges on the rate plan being added
 		if (qty != null) {
 			ArrayList<RatePlanChargeData> listRpcd = new ArrayList<RatePlanChargeData>();
-			Catalog catalog = null;
-			try {
-				catalog = new Catalog();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			ArrayList<CatalogCharge> charges = catalog.getRatePlan(prpId).getCharges();
+			ArrayList<CatalogCharge> charges = Catalog.getRatePlan(prpId).getCharges();
 			for(CatalogCharge charge : charges){
 				if (charge.getChargeModel() == "Per Unit Pricing" || charge.getChargeModel() == "Tiered Pricing" || charge.getChargeModel() == "Volume Pricing") {
 					RatePlanCharge rpc = new RatePlanCharge();
