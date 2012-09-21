@@ -89,7 +89,7 @@ public class PaymentManager {
 			
 			// Append information from existing customer
 			iframeUrl += "&field_accountId=" + contact.getAccountId();
-			
+
 			if (contact.getCountry() != null) {
 				if (contact.getCountry().equalsIgnoreCase("united states")) {
 					iframeUrl += "&field_creditCardCountry=USA";
@@ -97,7 +97,7 @@ public class PaymentManager {
 					iframeUrl += "&field_creditCardCountry=CAN";
 				}
 			}
-			
+
 			iframeUrl += (contact.getState() != null) ? "&field_creditCardState=" + contact.getState() : "";
 			iframeUrl += (contact.getCity() != null) ? "&field_creditCardCity=" + contact.getCity() : "";
 			iframeUrl += (contact.getPostalCode() != null) ? "&field_creditCardPostalCode=" + contact.getPostalCode() : "";

@@ -52,6 +52,7 @@ public class Amender {
 		}
 		AmenderSubscription subscription = subManager.getCurrentSubscription(accountName);
 		
+		
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 		df.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
 		Calendar today = Calendar.getInstance();

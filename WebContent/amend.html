@@ -47,18 +47,18 @@
 	}
 	
 	var getCurrentSubscription = function(){
-		$("#loading").show('fast');
 		$.getJSON("backend?type=GetLatestSubscription",
 			function(data){
 				loadPlan(data.msg[0]);
         	}
 		);
-		$(".chosen_plans").html("Loading Subscription");
+		$(".loading").show('fast');
+		$(".chosen_plans").html("");
 		$(".amendment_list").html("Loading Subscription");
 	}
 	
 	var loadPlan = function(msg){
-		$("#loading").fadeOut('fast');
+		$(".loading").hide();
 		
 		//Set Email
 		$("#user_email").html("("+msg.userEmail+")");
@@ -94,7 +94,6 @@
 		var html = "";
 		for(var i in msg.removed_plans){
 			var aitem = msg.removed_plans[i];
-			console.log(aitem);
 			html+="<div class='removed border_bottom_dashed'>";
             html+="    <div class='clear-block'></div>";
             html+="    <div class='rateplan_info'> <span class='rateplan_name'>"+aitem.ProductName+"<br>"+aitem.Name+"</span><br>";
@@ -125,6 +124,7 @@
 		confirm('Remove plan ' + itemId + '?');
 	};
 */
+
 	var removeFromPlan = function(event){
 		$('.accept-change').slideUp('fast');
 		var buttonId = event.target.id;
@@ -182,7 +182,6 @@
 		$.getJSON("backend?type=PreviewAddRatePlan", {itemId:itemId, itemQty:itemQty},
 			function(data){
 				var msg = data.msg[0];
-				console.log(msg);
 				var total = msg.invoiceAmount;
 				var html = '';
 				html += 'Are you sure you would like to add this product?<br><br>';
@@ -202,7 +201,6 @@
 					$.getJSON("backend?type=AddRatePlan", {itemId:itemId, itemQty:itemQty},
 						function(data2){
 						var msg = data2.msg[0];
-						console.log(msg);
 							$('.accept-change').slideUp('fast');
 							getCurrentSubscription();
 						}
@@ -367,6 +365,7 @@
           <h3>Current Subscription</h3>
           <span id="user_email"></span>
         </div>
+        <div class="loading"> loading... </div>
         <ul class="chosen_plans">
         </ul>
       </div>
