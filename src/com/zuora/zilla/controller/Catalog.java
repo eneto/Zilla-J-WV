@@ -1,12 +1,24 @@
 package com.zuora.zilla.controller;
 
+import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.ser.StdSerializerProvider;
 
 import com.zuora.api.*;
 import com.zuora.api.object.*;
@@ -39,8 +51,8 @@ public class Catalog {
 	public static CatalogModel readCatalog() {
 		if(catalogGroups==null){
 			//Read in from a file.
-//	         CatalogModel cat = null;
-//	         System.out.println("reading cache");
+	         CatalogModel cat = null;
+	         //TODO Read catalog from file
 //	         try
 //	         {
 //	            FileInputStream fileIn =
@@ -51,13 +63,13 @@ public class Catalog {
 //	            in.close();
 //	            fileIn.close();
 //	            
-//	            return cat.getCatalogGroups();
+//	            return cat;
 //	            
 //	        }catch(Exception e) {
 //				//If the file doesn't exist, refresh the catalog
 //	        	System.out.println(e.getMessage());
 //	        	System.out.println("cache not found; reading from zuora");
-				return refreshCatalog();        
+				return refreshCatalog();
 //	        }
 		} else {
 			CatalogModel data = new CatalogModel();
@@ -132,18 +144,14 @@ public class Catalog {
 		}
 		
 		//Write the catalog to a file for future use.
-//		CatalogModel cat = new CatalogModel();
-//		try{
-//			FileOutputStream fileOut =
-//				new FileOutputStream("catalog_cache.ser");
-//			ObjectOutputStream out =
-//				new ObjectOutputStream(fileOut);
-//			out.writeObject(cat);
-//			out.close();
-//			fileOut.close();
-//		} catch (Exception e){
-//			System.out.println(e.getMessage());
-//		}
+		try{
+			BufferedWriter out = new BufferedWriter(new FileWriter("catalog_cache.ser"));
+			String jsonCatalog = output(catalogGroups);
+			out.write(jsonCatalog);
+			out.close();
+		} catch (Exception e){
+			System.out.println(e.getMessage());
+		}
 		
 		Catalog.catalogGroups = catalogGroups;
 		
@@ -260,4 +268,37 @@ public class Catalog {
 		return charges;
 	}
 
+	/**
+	 * This function returns the given CatalogModel as JSON.
+	 */
+	private static String output(Object msg) {
+		Writer strWriter = new StringWriter();
+		try {
+			//Initialize Object Mapper for JSON encoding
+			ObjectMapper mapper = new ObjectMapper();
+			
+			//Suppress 'Null' values in output
+			StdSerializerProvider sp = new StdSerializerProvider();
+			sp.setNullValueSerializer(new NullSerializer());
+			mapper.setSerializerProvider(sp);
+
+			// Parse in JSON
+			mapper.writeValue(strWriter, msg);
+			strWriter.flush();
+			strWriter.close();
+
+		} catch (JsonGenerationException e) {
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return strWriter.toString();
+	}
+	
+	
 }

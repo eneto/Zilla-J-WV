@@ -54,7 +54,7 @@ public class ZApi {
 			isLoggedIn=true;
 		} catch (Exception e) {
 			isLoggedIn=false;
-			Logger.Log(e.getMessage());
+			System.out.println("Error on login.");
 		}
 	}
 
@@ -73,7 +73,7 @@ public class ZApi {
  		try{
  			qres = stub.query(queryString);
  		} catch (Exception e){
-			Logger.Log("Exception on zQuery [" + queryString + "]: " + e.getMessage());
+			System.out.println("Exception on zQuery [" + queryString + "]: " + e.getMessage());
  			throw e;
  		}
 		

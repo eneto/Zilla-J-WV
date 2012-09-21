@@ -289,10 +289,11 @@ public class SubscriptionManager {
 	 *         Payment Method ID passed doesn't exist, returns the error string,
 	 *         'INVALID_PMID'
 	 */
+
 	public ResponseSubscribe subscribeWithCurrentCart(String userEmail, String pmId, CartHelper cartHelper) {
-		
+
 		ResponseSubscribe data = new ResponseSubscribe();
-		
+
 		try {
 			if (!new AccountManager().checkEmailAvailability(userEmail)) {
 				data.setError("DUPLICATE_EMAIL");
@@ -304,7 +305,7 @@ public class SubscriptionManager {
 			data.setSuccess(false);
 			return data;
 		}
-		
+
 		// Get Contact Information from newly created user
 		QueryResult pmResult = null;
 		try {
@@ -323,10 +324,10 @@ public class SubscriptionManager {
 			data.setSuccess(false);
 			return data;
 		}
-		
+
 		PaymentMethod pm = (PaymentMethod) pmResult.getRecords()[0];
 		String holderName = (pm.getCreditCardHolderName() != null) ? pm.getCreditCardHolderName() : "";
-		
+
 		// Derive first and last name from CardHolderName
 		String firstName, lastName;
 		
@@ -366,16 +367,22 @@ public class SubscriptionManager {
 		acc.setBillCycleDay(mday);
 		acc.setStatus("Active");
 		
-		if (Boolean.parseBoolean(zu.getPropertyValue("makeSfdcAccount"))) {
-			// Create an account in Salesforce if possible, and store the CRM ID on the zuora account
-			SApi sapi = new SApi();
-			ResponseAction resp = sapi.makeSfdcAccount(userEmail);
-			if(resp.isSuccess()){
-				//Get ID of the created account.
-				acc.setCrmId(resp.getData());
-			} else {
-				//If Salesforce connection fails, create the Zuora account anyway.
+		try{
+			String strMakeSfdcAccount = zu.getPropertyValue("makeSfdcAccount");
+			boolean makeSfdcAccount = Boolean.parseBoolean(strMakeSfdcAccount);
+			if (makeSfdcAccount) {
+				// Create an account in Salesforce if possible, and store the CRM ID on the zuora account
+				SApi sapi = new SApi();
+				ResponseAction resp = sapi.makeSfdcAccount(userEmail);
+				if(resp.isSuccess()){
+					//Get ID of the created account.
+					acc.setCrmId(resp.getData());
+				} else {
+					//If Salesforce connection fails, create the Zuora account anyway.
+				}
 			}
+		} catch (Exception e){
+			System.out.println("Account not created");
 		}
 		
 		// Set up contact

@@ -12,7 +12,7 @@ import com.zuora.zilla.model.ResponseAction;
 public class SApi {
 
 	/** The Constant PROPERTY_ENDPOINT. */
-	private static final String PROPERTY_ENDPOINT = "SfdcSecurityEndpoint";
+	private static final String PROPERTY_ENDPOINT = "SfdcEndpoint";
 	/** The Constant PROPERTY_USERNAME. */
 	private static final String PROPERTY_USERNAME = "SfdcUsername";
 	/** The Constant PROPERTY_PASSWORD. */

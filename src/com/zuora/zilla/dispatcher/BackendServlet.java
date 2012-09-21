@@ -57,31 +57,6 @@ public class BackendServlet extends HttpServlet {
 				output = backend.getNewIframeSrc();
 			} else if (type.equalsIgnoreCase("IsUserLoggedIn")) {
 				output = backend.isUserLoggedIn(request);
-			} else if (type.equalsIgnoreCase("GetLastPdf")) {
-				HttpSession session = request.getSession();
-				String email = (String) session.getAttribute("username");
-				String body=null;
-				try {
-					body = new InvoiceManager().getLastInvoicePdf(email);
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				response.setContentType("application/pdf");
-				response.setHeader("Content-disposition",
-						"attachment; filename=latest.pdf");
-				ServletOutputStream pdfOutput = response.getOutputStream();
-				if(body!=null){
-					pdfOutput.write(ZuoraUtility.decodeBase64(body));
-				} else {
-					// TODO Handle errors when PDF is not found due to logged out user, no generated invoice, etc.
-				}
-//				out.print(ZuoraUtility.decodeBase64(body));
-				return;
-			} else if (type.equalsIgnoreCase("Logout")) {
-				request.getSession().invalidate();
-				response.sendRedirect("login.html");
-				
 			} else if (type.equalsIgnoreCase("PreviewCurrentCart")) {
 				output = backend.previewCurrentCart(request);
 			} else if (type.equalsIgnoreCase("PreviewAddRatePlan")) {
@@ -110,6 +85,31 @@ public class BackendServlet extends HttpServlet {
 				output = backend.getCompleteSummary(request);
 			} else if (type.equalsIgnoreCase("GetPaymentMethodSummary")) {
 				output = backend.getPaymentMethodSummary(request);
+			} else if (type.equalsIgnoreCase("GetLastPdf")) {
+				HttpSession session = request.getSession();
+				String email = (String) session.getAttribute("username");
+				String body=null;
+				try {
+					body = new InvoiceManager().getLastInvoicePdf(email);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				response.setContentType("application/pdf");
+				response.setHeader("Content-disposition",
+						"attachment; filename=latest.pdf");
+				ServletOutputStream pdfOutput = response.getOutputStream();
+				if(body!=null){
+					pdfOutput.write(ZuoraUtility.decodeBase64(body));
+				} else {
+					// TODO Handle errors when PDF is not found due to logged out user, no generated invoice, etc.
+				}
+//				out.print(ZuoraUtility.decodeBase64(body));
+				return;
+			} else if (type.equalsIgnoreCase("Logout")) {
+				request.getSession().invalidate();
+				response.sendRedirect("login.html");
+				
 			} else {
 				output = "The action selected ('" + type +"') is not supported by the backend.";
 			}

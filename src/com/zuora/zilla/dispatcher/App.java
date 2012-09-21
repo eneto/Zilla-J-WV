@@ -92,7 +92,6 @@ public class App extends HttpServlet {
 			data = new CatalogModel();
 			data.setError(e.getMessage());
 			data.setSuccess(true);
-			
 		}
 
 		return output(data);
@@ -183,7 +182,7 @@ public class App extends HttpServlet {
 		}
 		
 		if (subscription == null) {
-			//TODO This should have a response code that tells you whether it succeeded
+			//TODO This should have a response code that tells you why it failed
 			return output(null);
 		}
 		
@@ -624,9 +623,4 @@ public class App extends HttpServlet {
 			}
 		}
 	}
-
-	
-	
-	
-	
 }
