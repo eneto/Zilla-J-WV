@@ -79,7 +79,7 @@ The four primary functions of a B2C web portal are Product Selector, Subscribe, 
 		3.)	User can preview the amount of the additional charge they will incur before adding the new product to their subscription.
 		4.)	User can remove a product from their subscription effective at the end of the bill cycle.
 
- 
+
 Design Structure
 ----------------
  
