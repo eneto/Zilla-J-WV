@@ -1,0 +1,31 @@
+body, td, input, textarea, select {
+    font: 11px/16px Verdana, Arial, Helvetica, sans-serif;
+    color: #000;
+}
+.z_hppm_field_label_cell { 
+    width: 240px; 
+    display: inline-block;
+    width: 118px;
+    text-align: right;
+    padding-right: 15px;
+    line-height: 30px;
+}
+.z_hppm_text_input { 
+    width: 200px; 
+    border: 1px solid #CCCCCC;
+    height: 28px;
+    line-height: 28px;
+    margin: 3px 0;
+}
+.z_hppm_radio_input { 
+    border: 1px solid #CCCCCC;
+    height: 28px;
+    line-height: 28px;
+    margin: 3px 0;
+}
+.z_hppm_select_input { 
+    border: 1px solid #CCCCCC;
+    height: 28px;
+    line-height: 28px;
+    margin: 3px 0;
+}
