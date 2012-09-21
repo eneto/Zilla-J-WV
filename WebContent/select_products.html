@@ -18,7 +18,12 @@
 		
 		$.getJSON("backend?type=ReadCatalog",
 			function(data){
-				listProducts(data.msg);
+				var msg = data.msg[0];
+				if(!msg.success){
+					alert("There was an issue retrieving the catalog. Please try again later.");
+				} else {
+					listProducts(msg.catalogGroups);
+				}
         	}
 		);
 		$("#remove_all_button").click(function(){

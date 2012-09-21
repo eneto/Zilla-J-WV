@@ -22,6 +22,7 @@ import com.zuora.zilla.util.*;
  * TODO Use Data Exports instead of queries
  * 
  * @author Mickael Pham <mickael.pham@zuora.com>
+ * @author Eric Neto <eric.neto@zuora.com>
  */
 public class Catalog {
 	/**ArrayList containing all catalog groups**/
@@ -35,7 +36,7 @@ public class Catalog {
 	private static ZApi zapi;
 
 
-	public static ArrayList<CatalogGroup> readCatalog() {
+	public static CatalogModel readCatalog() {
 		if(catalogGroups==null){
 			//Read in from a file.
 //	         CatalogModel cat = null;
@@ -59,66 +60,76 @@ public class Catalog {
 				return refreshCatalog();        
 //	        }
 		} else {
-			return catalogGroups;
+			CatalogModel data = new CatalogModel();
+			data.setSuccess(true);
+			data.setCatalogGroups(catalogGroups);
+			return data;
 		}
 	}
 	
 	/** Return all products available today. */
-	public static ArrayList<CatalogGroup> refreshCatalog() {
+	public static CatalogModel refreshCatalog() {
 		zapi = new ZApi();
-
+		CatalogModel data = new CatalogModel();
 		ArrayList<CatalogGroup> catalogGroups = new ArrayList<CatalogGroup>();
-		// TODO Allow user to filter out specific groups, to be configured in the config file
-		// TODO Optimize to use Data Exports instead of queries
-
-		today = ZuoraUtility.getCurrentDate();
-
-		// Step #1 -> get all products
-		ArrayList<CatalogProduct> products = getAllProducts();
-		products.trimToSize();
-
-		// Step #2 -> get all rate plans
-		for (CatalogProduct product : products) {
-			ArrayList<CatalogRatePlan> ratePlans = getAllRatePlans(product);
-			ratePlans.trimToSize();
-			product.setRatePlans(ratePlans);
-		}
-
-		// Step #3 -> get all charges
-		for (CatalogProduct product : products) {
-			for (CatalogRatePlan catalogRatePlan : product.getRatePlans()) {
-				ArrayList<CatalogCharge> charges = getAllCharges(catalogRatePlan);
-				charges.trimToSize();
-
-				boolean quantifiable = false;
-				String uom = null;
-
-				for (CatalogCharge charge : charges) {
-					if (!charge.getChargeType().equals("Usage")
-							&& (charge.getChargeModel().equals("Per Unit Pricing")
-								|| charge.getChargeModel().equals("Tiered Pricing")
-								|| charge.getChargeModel().equals("Volume Pricing"))) {
-						uom = charge.getUom();
-						quantifiable = true;
-					}
-				}
-				
-				catalogRatePlan.setQuantifiable(quantifiable);
-				catalogRatePlan.setUom(uom);
-				catalogRatePlan.setCharges(charges);
+		
+		try{
+			// TODO Allow user to filter out specific groups, to be configured in the config file
+			// TODO Optimize to use Data Exports instead of queries
+	
+			today = ZuoraUtility.getCurrentDate();
+	
+			// Step #1 -> get all products
+			ArrayList<CatalogProduct> products = getAllProducts();
+			products.trimToSize();
+	
+			// Step #2 -> get all rate plans
+			for (CatalogProduct product : products) {
+				ArrayList<CatalogRatePlan> ratePlans = getAllRatePlans(product);
+				ratePlans.trimToSize();
+				product.setRatePlans(ratePlans);
 			}
+	
+			// Step #3 -> get all charges
+			for (CatalogProduct product : products) {
+				for (CatalogRatePlan catalogRatePlan : product.getRatePlans()) {
+					ArrayList<CatalogCharge> charges = getAllCharges(catalogRatePlan);
+					charges.trimToSize();
+	
+					boolean quantifiable = false;
+					String uom = null;
+	
+					for (CatalogCharge charge : charges) {
+						if (!charge.getChargeType().equals("Usage")
+								&& (charge.getChargeModel().equals("Per Unit Pricing")
+									|| charge.getChargeModel().equals("Tiered Pricing")
+									|| charge.getChargeModel().equals("Volume Pricing"))) {
+							uom = charge.getUom();
+							quantifiable = true;
+						}
+					}
+					
+					catalogRatePlan.setQuantifiable(quantifiable);
+					catalogRatePlan.setUom(uom);
+					catalogRatePlan.setCharges(charges);
+				}
+			}
+	
+			// print output
+			// printProducts(products);
+	
+			CatalogGroup catalogGroup = new CatalogGroup();
+			catalogGroup.setProducts(products);
+			catalogGroup.setName("");
+	
+			// Add this catalog group to the ArrayList
+			catalogGroups.add(catalogGroup);
+			catalogGroups.trimToSize();
+		} catch (Exception e){
+			data.setError(e.getMessage());
+			data.setSuccess(false);
+			return data;
 		}
-
-		// print output
-		// printProducts(products);
-
-		CatalogGroup catalogGroup = new CatalogGroup();
-		catalogGroup.setProducts(products);
-		catalogGroup.setName("");
-
-		// Add this catalog group to the ArrayList
-		catalogGroups.add(catalogGroup);
-		catalogGroups.trimToSize();
 		
 		//Write the catalog to a file for future use.
 //		CatalogModel cat = new CatalogModel();
@@ -135,7 +146,10 @@ public class Catalog {
 //		}
 		
 		Catalog.catalogGroups = catalogGroups;
-		return Catalog.catalogGroups;
+		
+		data.setCatalogGroups(catalogGroups);
+		data.setSuccess(true);
+		return data;
 	}
 
 	/** Display catalogGroup object in the console. */
@@ -160,7 +174,8 @@ public class Catalog {
 	 */
 	public static CatalogRatePlan getRatePlan(String ratePlanId) {
 		CatalogRatePlan ratePlan = null;
-		for (CatalogGroup catalogGroup : readCatalog()) {
+		ArrayList<CatalogGroup> catalogGroups = readCatalog().getCatalogGroups();
+		for (CatalogGroup catalogGroup : catalogGroups) {
 			for (CatalogProduct catalogProduct : catalogGroup.getProducts()) {
 				for (CatalogRatePlan catalogRatePlan : catalogProduct.getRatePlans()) {
 					if (catalogRatePlan.getId().equalsIgnoreCase(ratePlanId)) {
@@ -172,51 +187,37 @@ public class Catalog {
 		return ratePlan;
 	}
 	
-	private static ArrayList<CatalogProduct> getAllProducts() {
+	private static ArrayList<CatalogProduct> getAllProducts() throws Exception {
 		ArrayList<CatalogProduct> products = new ArrayList<CatalogProduct>();
 
-		QueryResult productResult = null;
-		try {
-			productResult = zapi.zQuery("select Id, Name, Description from Product where EffectiveStartDate < '"
-					+ today + "' and EffectiveEndDate > '" + today + "'");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		QueryResult productResult = zapi.zQuery("select Id, Name, Description from Product where EffectiveStartDate < '"
+				+ today + "' and EffectiveEndDate > '" + today + "'");
 		
 		// Prepare the response object
-		try {
-			ZObject[] records = productResult.getRecords();
-			for (int i = 0; i < records.length; i++) {
-				Product p = (Product) records[i];
-				CatalogProduct catalogProduct = new CatalogProduct();
-				catalogProduct.setId(p.getId());
-				catalogProduct.setName(p.getName());
-				catalogProduct.setDescription(p.getDescription());
-				products.add(catalogProduct);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
+		ZObject[] records = productResult.getRecords();
+		for (int i = 0; i < records.length; i++) {
+			Product p = (Product) records[i];
+			CatalogProduct catalogProduct = new CatalogProduct();
+			catalogProduct.setId(p.getId());
+			catalogProduct.setName(p.getName());
+			catalogProduct.setDescription(p.getDescription());
+			products.add(catalogProduct);
 		}
 
 		return products;
 	}
 
-	private static ArrayList<CatalogRatePlan> getAllRatePlans(CatalogProduct product) {
+	private static ArrayList<CatalogRatePlan> getAllRatePlans(CatalogProduct product) throws Exception {
 		ArrayList<CatalogRatePlan> ratePlans = new ArrayList<CatalogRatePlan>();
 
-		try {
-			QueryResult prpResult = null;
-			try {
-				prpResult = zapi.zQuery("Select Id, Name, Description from ProductRatePlan where ProductId='"
-						+ product.getId()
-						+ "' and EffectiveStartDate < '"
-						+ today
-						+ "' and EffectiveEndDate > '" + today + "'");
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+		QueryResult prpResult = zapi.zQuery("Select Id, Name, Description from ProductRatePlan where ProductId='"
+					+ product.getId()
+					+ "' and EffectiveStartDate < '"
+					+ today
+					+ "' and EffectiveEndDate > '" + today + "'");
 
-			ZObject[] qRatePlans = prpResult.getRecords();
+		ZObject[] qRatePlans = prpResult.getRecords();
+		if(prpResult.getSize()>0){
 			for (int i = 0; i < qRatePlans.length; i++) {
 				ProductRatePlan prp = (ProductRatePlan) qRatePlans[i];
 				CatalogRatePlan rp = new CatalogRatePlan();
@@ -229,44 +230,33 @@ public class Catalog {
 				// add to ArrayList
 				ratePlans.add(rp);
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
 
 		return ratePlans;
 	}
 
-	private static ArrayList<CatalogCharge> getAllCharges(CatalogRatePlan catalogRatePlan) {
+	private static ArrayList<CatalogCharge> getAllCharges(CatalogRatePlan catalogRatePlan) throws Exception {
 		ArrayList<CatalogCharge> charges = new ArrayList<CatalogCharge>();
-
-		try {
-			QueryResult chargesResult = null;
-			try {
-				chargesResult = zapi.zQuery("Select Id, Name, Description, UOM, ChargeModel, ChargeType from ProductRatePlanCharge where ProductRatePlanId='"
+		QueryResult chargesResult = zapi.zQuery("Select Id, Name, Description, UOM, ChargeModel, ChargeType from ProductRatePlanCharge where ProductRatePlanId='"
 						+ catalogRatePlan.getId() + "'");
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
 				
-			ZObject[] zCharges = chargesResult.getRecords();
-			// cast
-			for (int i = 0; i < zCharges.length; i++) {
-				ProductRatePlanCharge prpc = (ProductRatePlanCharge) zCharges[i];
-				CatalogCharge cc = new CatalogCharge();
+		ZObject[] zCharges = chargesResult.getRecords();
+		// cast
+		for (int i = 0; i < zCharges.length; i++) {
+			ProductRatePlanCharge prpc = (ProductRatePlanCharge) zCharges[i];
+			CatalogCharge cc = new CatalogCharge();
 
-				if (prpc != null) {
-					cc.setChargeModel(prpc.getChargeModel());
-					cc.setChargeType(prpc.getChargeType());
-					cc.setDescription(prpc.getDescription());
-					cc.setId(prpc.getId());
-					cc.setName(prpc.getName());
-					cc.setUom(prpc.getUOM());
-					charges.add(cc);
-				}
+			if (prpc != null) {
+				cc.setChargeModel(prpc.getChargeModel());
+				cc.setChargeType(prpc.getChargeType());
+				cc.setDescription(prpc.getDescription());
+				cc.setId(prpc.getId());
+				cc.setName(prpc.getName());
+				cc.setUom(prpc.getUOM());
+				charges.add(cc);
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
+		
 		return charges;
 	}
 

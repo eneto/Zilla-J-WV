@@ -19,7 +19,8 @@ public class CatalogTest extends TestCase {
 		try {
 			System.out.println("===Catalog Refresh===\n");
 			System.out.print("Refreshing...");
-			ArrayList<CatalogGroup> groups = Catalog.readCatalog();
+			CatalogModel data = Catalog.readCatalog();
+			ArrayList<CatalogGroup> groups = data.getCatalogGroups();
 			System.out.println("Complete.");
 			for(CatalogGroup g : groups){
 				for(CatalogProduct p : g.getProducts()){
@@ -42,7 +43,8 @@ public class CatalogTest extends TestCase {
 		try {
 			System.out.println("===Catalog Read===\n");
 			System.out.print("Reading...");
-			ArrayList<CatalogGroup> groups = Catalog.readCatalog();
+			CatalogModel data = Catalog.readCatalog();
+			ArrayList<CatalogGroup> groups = data.getCatalogGroups();
 			System.out.println("Complete.");
 			for(CatalogGroup g : groups){
 				for(CatalogProduct p : g.getProducts()){

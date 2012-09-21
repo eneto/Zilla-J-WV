@@ -171,7 +171,6 @@ public class SubscriptionManager {
 					
 					newPlan.setAmenderCharges(charges);
 					activePlans.add(newPlan);
-					
 				}
 			}
 			
@@ -368,7 +367,15 @@ public class SubscriptionManager {
 		acc.setStatus("Active");
 		
 		if (Boolean.parseBoolean(zu.getPropertyValue("makeSfdcAccount"))) {
-			// TODO Integrate with SalesForce.Com
+			// Create an account in Salesforce if possible, and store the CRM ID on the zuora account
+			SApi sapi = new SApi();
+			ResponseAction resp = sapi.makeSfdcAccount(userEmail);
+			if(resp.isSuccess()){
+				//Get ID of the created account.
+				acc.setCrmId(resp.getData());
+			} else {
+				//If Salesforce connection fails, create the Zuora account anyway.
+			}
 		}
 		
 		// Set up contact

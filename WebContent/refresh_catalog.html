@@ -17,10 +17,13 @@
 		
 		$.getJSON("backend?type=RefreshCatalog",
 			function(data){
-				if(!data.success) {	addError(data.msg); }
-				else { 
+				var msg = data.msg[0];
+				if(!msg.success){
 					$("#loading").fadeOut('slow');
-					showResults(data.msg); 
+					alert(msg.error);
+				}else { 
+					$("#loading").fadeOut('slow');
+					showResults(msg.catalogGroups);
 				}
         	}
 		);	

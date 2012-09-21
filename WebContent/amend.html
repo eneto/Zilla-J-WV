@@ -26,7 +26,12 @@
 			
 					$.getJSON("backend?type=ReadCatalog",
 						function(data2){
-							listProducts(data2.msg);
+							var msg = data2.msg[0];
+							if(!msg.success){
+								alert("There was an issue retrieving the catalog. Please try again later.");
+							} else {
+								listProducts(msg.catalogGroups);
+							}
 			        	}
 					);
 				}

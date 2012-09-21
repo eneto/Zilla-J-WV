@@ -61,17 +61,17 @@ public class App extends HttpServlet {
 	 *         the products and rate plans in the product catalog.
 	 */
 	public String readCatalog() {
-		List<CatalogGroup> groups = null;
+		CatalogModel data = null;
 		try {
 			// Retrieve the catalog from z-java and refresh the cache
-			groups = Catalog.readCatalog();
-
+			data = Catalog.readCatalog();
 		} catch (Exception e) {
-			e.printStackTrace();
+			data = new CatalogModel();
+			data.setError(e.getMessage());
+			data.setSuccess(true);			
 		}
 
-		this.array = true;
-		return output(groups);
+		return output(data);
 	}
 
 	/**
@@ -84,17 +84,18 @@ public class App extends HttpServlet {
 	 *         the products and rate plans in the product catalog.
 	 */
 	public String refreshCatalog() {
-		List<CatalogGroup> groups = null;
+		CatalogModel data = null;
 		try {
 			// Retrieve the catalog from z-java and refresh the cache
-			groups = Catalog.refreshCatalog();
-
+			data = Catalog.refreshCatalog();
 		} catch (Exception e) {
-			e.printStackTrace();
+			data = new CatalogModel();
+			data.setError(e.getMessage());
+			data.setSuccess(true);
+			
 		}
 
-		this.array = true;
-		return output(groups);
+		return output(data);
 	}
 
 	/**
