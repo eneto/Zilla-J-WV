@@ -39,45 +39,45 @@ Supported Use Cases
 
 The four primary functions of a B2C web portal are Product Selector, Subscribe, Account Detail, and Amendments.
 
-===Product Selector===
-	1.)	Show Product Catalog from Zuora.
-	2.)	User can add an item from the catalog to their cart. For catalog items that are billed by quantity, a quantity can be entered before adding the item.
-	3.)	User can remove an item from their cart.
-	4.)	User can clear their current cart.
-	5.)	After selecting products, user clicks a button to continue to the Subscribe page.
+	1.) Product Selector
+		1.)	Show Product Catalog from Zuora.
+		2.)	User can add an item from the catalog to their cart. For catalog items that are billed by quantity, a quantity can be entered before adding the item.
+		3.)	User can remove an item from their cart.
+		4.)	User can clear their current cart.
+		5.)	After selecting products, user clicks a button to continue to the Subscribe page.
 
-===Subscribe===
-	1.)	User can preview invoice amount of their selected products.
-	2.)	User enters their contact information.
-	3.)	User clicks subscribe.
-	a.	If there is an input error, User is asked to fix it and resubmit their information.
-	4.)	User's account is created and they are logged in and redirected to the account detail page.
+	2.) Subscribe
+		1.)	User can preview invoice amount of their selected products.
+		2.)	User enters their contact information.
+		3.)	User clicks subscribe.
+		a.	If there is an input error, User is asked to fix it and resubmit their information.
+		4.)	User's account is created and they are logged in and redirected to the account detail page.
 
-===Account Detail===
-	1.)	User arrives at this page through login, or immediately after subscribing.
-	2.)	User can view Account information, including:
-		a.	Account name
-		b.	Last payment date and amount
-		c.	Last invoice date
-		d.	Current account balance
-		e.	The PDF version of their latest invoice
-	3.)	User can manage the credit cards associated with this account.
-		a.	Display Credit Card holder name, Masked Credit Card number, and Expiration date of each card on file
-		b.	Add a new credit card, card will be validated as soon as it's submitted
-		c.	Switch to a different credit card
-		d.	Remove an existing credit card
-	4.)	User can manage Contact information.
-		a.	View Contact details associated with the account
-		b.	Update Contact details
-	5.)	User can view subscription information.
-		a.	View current subscription, including expiration dates for plans that will be removed in the future
-		b.	User can click a button to continue to the Amendments page
+	3.) Account Detail
+		1.)	User arrives at this page through login, or immediately after subscribing.
+		2.)	User can view Account information, including:
+			a.	Account name
+			b.	Last payment date and amount
+			c.	Last invoice date
+			d.	Current account balance
+			e.	The PDF version of their latest invoice
+		3.)	User can manage the credit cards associated with this account.
+			a.	Display Credit Card holder name, Masked Credit Card number, and Expiration date of each card on file
+			b.	Add a new credit card, card will be validated as soon as it's submitted
+			c.	Switch to a different credit card
+			d.	Remove an existing credit card
+		4.)	User can manage Contact information.
+			a.	View Contact details associated with the account
+			b.	Update Contact details
+		5.)	User can view subscription information.
+			a.	View current subscription, including expiration dates for plans that will be removed in the future
+			b.	User can click a button to continue to the Amendments page
 
-Amend
-	1.)	Display Product Catalog and user's current subscription.
-	2.)	User can select a product from the catalog to add to their current subscription.
-	3.)	User can preview the amount of the additional charge they will incur before adding the new product to their subscription.
-	4.)	User can remove a product from their subscription effective at the end of the bill cycle.
+	4.) Amend
+		1.)	Display Product Catalog and user's current subscription.
+		2.)	User can select a product from the catalog to add to their current subscription.
+		3.)	User can preview the amount of the additional charge they will incur before adding the new product to their subscription.
+		4.)	User can remove a product from their subscription effective at the end of the bill cycle.
 
  
 Design Structure
