@@ -1,12 +1,18 @@
 package com.zuora.zilla.controller;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -39,7 +45,9 @@ import com.zuora.zilla.util.*;
 public class Catalog {
 	/**ArrayList containing all catalog groups**/
 	private static ArrayList<CatalogGroup> catalogGroups;
-	
+
+	/**Whether or not to pull values for upgrades**/
+	private static boolean supportUpgrades;
 	
 	/** Date formatted to query Zuora, using GMT-8 (see ZuoraUtility). */
 	private static String today;
@@ -78,19 +86,23 @@ public class Catalog {
 			return data;
 		}
 	}
-	
+
 	/** Return all products available today. */
 	public static CatalogModel refreshCatalog() {
 		zapi = new ZApi();
 		CatalogModel data = new CatalogModel();
 		ArrayList<CatalogGroup> catalogGroups = new ArrayList<CatalogGroup>();
-		
+
 		try{
 			// TODO Allow user to filter out specific groups, to be configured in the config file
 			// TODO Optimize to use Data Exports instead of queries
 	
 			today = ZuoraUtility.getCurrentDate();
-	
+			
+			ZuoraUtility zuorautil = new ZuoraUtility();
+			supportUpgrades = Boolean.parseBoolean(zuorautil.getPropertyValue("useUpgradeDowngrade"));
+			supportUpgrades = Boolean.parseBoolean(zuorautil.getPropertyValue("useUpgradeDowngrade"));
+
 			// Step #1 -> get all products
 			ArrayList<CatalogProduct> products = getAllProducts();
 			products.trimToSize();
@@ -142,21 +154,12 @@ public class Catalog {
 			data.setSuccess(false);
 			return data;
 		}
-		
-		//Write the catalog to a file for future use.
-		try{
-			BufferedWriter out = new BufferedWriter(new FileWriter("catalog_cache.ser"));
-			String jsonCatalog = output(catalogGroups);
-			out.write(jsonCatalog);
-			out.close();
-		} catch (Exception e){
-			System.out.println(e.getMessage());
-		}
-		
+
 		Catalog.catalogGroups = catalogGroups;
-		
+
 		data.setCatalogGroups(catalogGroups);
 		data.setSuccess(true);
+
 		return data;
 	}
 
@@ -217,12 +220,15 @@ public class Catalog {
 
 	private static ArrayList<CatalogRatePlan> getAllRatePlans(CatalogProduct product) throws Exception {
 		ArrayList<CatalogRatePlan> ratePlans = new ArrayList<CatalogRatePlan>();
+		
+		String prpQuery = "Select Id, Name, Description" +
+				(supportUpgrades ? ", UpgradeLevel__c, UpgradeGroup__c "  : "") +
+				" from ProductRatePlan " +
+				"where ProductId='"	+ product.getId() + "' " +
+				"and EffectiveStartDate < '" + today + "' " +
+				"and EffectiveEndDate > '" + today + "'";
 
-		QueryResult prpResult = zapi.zQuery("Select Id, Name, Description from ProductRatePlan where ProductId='"
-					+ product.getId()
-					+ "' and EffectiveStartDate < '"
-					+ today
-					+ "' and EffectiveEndDate > '" + today + "'");
+		QueryResult prpResult = zapi.zQuery(prpQuery);
 
 		ZObject[] qRatePlans = prpResult.getRecords();
 		if(prpResult.getSize()>0){
@@ -234,6 +240,7 @@ public class Catalog {
 				rp.setProductName(product.getName());
 				rp.setDescription(prp.getDescription());
 				rp.setQuantifiable(new Boolean(false));
+				//TODO: Set UpgradeLevel__c and UpgradeGroup if upgrades are enabled
 
 				// add to ArrayList
 				ratePlans.add(rp);
@@ -299,6 +306,4 @@ public class Catalog {
 
 		return strWriter.toString();
 	}
-	
-	
 }

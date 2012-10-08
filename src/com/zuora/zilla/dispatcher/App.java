@@ -606,7 +606,6 @@ public class App extends HttpServlet {
 			bufferedWriter = new BufferedWriter(new FileWriter(CACHE_FILENAME));
 			// Write the JSON string to the output stream
 			bufferedWriter.write(catalogJson);
-
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {

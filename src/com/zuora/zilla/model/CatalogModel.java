@@ -6,6 +6,17 @@ public class CatalogModel {
 	public boolean success;
 	public String error;
 	
+	public ArrayList<CatalogGroup> catalogGroups;
+	public boolean supportUpgrades;
+	
+	public boolean isSupportUpgrades() {
+		return supportUpgrades;
+	}
+
+	public void setSupportUpgrades(boolean supportUpgrades) {
+		this.supportUpgrades = supportUpgrades;
+	}
+
 	public boolean isSuccess() {
 		return success;
 	}
@@ -21,8 +32,6 @@ public class CatalogModel {
 	public void setError(String error) {
 		this.error = error;
 	}
-
-	ArrayList<CatalogGroup> catalogGroups;
 
 	public ArrayList<CatalogGroup> getCatalogGroups() {
 		return catalogGroups;
