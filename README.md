@@ -2,7 +2,7 @@
 Zilla Code Libraries (Java)
 ===========================
 
-The Zilla project is set of code libraries driven by Zuora professional services that implement the most common use cases associated with building a B2C web storefront that integrates with the Zuora platform.
+The Zilla project is set of code libraries driven by Zuora professional services that implement the most common use cases associated with building a B2C web storefront that integrates with the Zuora platform. The WeVideo is a fork..
 
 Installation & Configuration
 ----------------------------
