@@ -31,6 +31,10 @@ public class UpgradeManagerTest {
 	
 	@Test
 	public void testRetrievingGroup() {
-		new UpgradeManager().retrieveGroup("2c92a0f939a9bc1a0139b8c300c96b31");
+		UpgradeManager manager = new UpgradeManager();
+		manager.retrieveGroup("2c92a0f939a9bc1a0139b8c300c96b31");
+		Assert.assertEquals(1, manager.getLowerPrpId().size());
+		Assert.assertEquals(1, manager.getUpperPrpId().size());
+		Assert.assertEquals("2c92a0f939a9bc1a0139b8c300c96b31", manager.getCurrentPrpId());
 	}
 }
