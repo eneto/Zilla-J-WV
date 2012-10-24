@@ -50,5 +50,17 @@ public class UpgradeManager {
 		RatePlan rp = (RatePlan) result.getRecords()[0];
 		return rp.getProductRatePlanId();
 	}
-	
+
+	public void retrieveGroup(String productRatePlanId) {
+		QueryResult result = null;
+		try {
+			result = zapi.zQuery("select UpgradeGroup__c, UpgradeLevel__c from ProductRatePlan where Id='"
+					+ productRatePlanId + "'");
+			logger.debug("Retrieved " + result.getSize() + " records from UpgradeGroup request");
+			
+		} catch (Exception e) {
+			logger.error("Error retrieving the Upgrade Group from the Product Rate Plan Id: "
+					+ productRatePlanId);
+		}
+	}
 }
