@@ -20,4 +20,12 @@ public class UpgradeManagerTest {
 		logger.debug("Retrieving Rate Plan Id: " + rpId);
 		Assert.assertEquals("2c92a0f93a6d39a0013a910522443932", rpId);
 	}
+	
+	@Test
+	public void testRetrievingProductRatePlan() {
+		String prpId = new UpgradeManager().getAssociatedProductRatePlanId("2c92a0f93a6d39a0013a910522443932");
+		Assert.assertNotNull(prpId);
+		logger.debug("Retrieving Product Rate Plan Id: " + prpId);
+		Assert.assertEquals("2c92a0f939a9bc1a0139b8c300c96b31", prpId);
+	}
 }
