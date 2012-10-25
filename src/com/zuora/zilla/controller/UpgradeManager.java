@@ -8,8 +8,11 @@ import org.slf4j.LoggerFactory;
 
 import com.zuora.api.QueryResult;
 import com.zuora.api.object.ProductRatePlan;
+import com.zuora.api.object.ProductRatePlanCharge;
 import com.zuora.api.object.RatePlan;
 import com.zuora.api.object.ZObject;
+import com.zuora.zilla.model.AmenderCharge;
+import com.zuora.zilla.model.AmenderPlan;
 import com.zuora.zilla.model.AmenderSubscription;
 import com.zuora.zilla.util.ZApi;
 
@@ -113,6 +116,58 @@ public class UpgradeManager {
 					+ productRatePlanId + " | " + e.getMessage());
 		}
 	}
+	
+	public void retrieveProductsFromCatalog() {
+		
+	}
+	
+//	public AmenderPlan getAmenderPlanFromId(String productRatePlanId) {
+//		AmenderPlan amenderPlan = null;
+//		
+//		// Get the name and description for this product
+//		try {
+//			QueryResult ratePlanQuery = zapi.zQuery("select Name, Description from ProductRatePlan where Id='"
+//					+ productRatePlanId + "'");
+//			
+//			ProductRatePlan prp = (ProductRatePlan) ratePlanQuery.getRecords(0);
+//			
+//			amenderPlan = new AmenderPlan();
+//			amenderPlan.setAmendmentId(prp.getId());
+//			amenderPlan.setName(prp.getName());
+//			amenderPlan.setDescription(prp.getDescription());
+//			
+//			
+//		} catch (Exception e) {
+//			logger.error("Error while querying product rate plan " + productRatePlanId + " | " + e.getMessage());
+//		}
+//		
+//		// Get the charges
+//		amenderPlan.setAmenderCharges(getAmenderChargesFromId(productRatePlanId));
+//		
+//		return amenderPlan;
+//	}
+	
+//	public List<AmenderCharge> getAmenderChargesFromId(String productRatePlanId) {
+//		List<AmenderCharge> charges = new ArrayList<AmenderCharge>();
+//		
+//		try {
+//			QueryResult chargesResult = zapi.zQuery("SELECT Id,Name,"
+//					+ "ProductRatePlanChargeId,ChargeModel,ChargeType,UOM,"
+//					+ "Quantity,ChargedThroughDate FROM ProductRatePlanCharge "
+//					+ "WHERE ProductRatePlanId='" + productRatePlanId + "'");
+//			
+//			for (ZObject zObject : chargesResult.getRecords()) {
+//				ProductRatePlanCharge prpc = (ProductRatePlanCharge) zObject;
+//				
+//			}
+//			
+//		} catch (Exception e) {
+//			logger.error("Error retrieving charges for product rate plan "
+//					+ productRatePlanId + " | " + e.getMessage());
+//		}
+//		
+//		return charges;
+//	}
 	
 	/** GETTERS */
 	
