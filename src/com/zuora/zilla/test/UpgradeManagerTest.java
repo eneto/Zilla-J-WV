@@ -1,5 +1,7 @@
 package com.zuora.zilla.test;
 
+import java.util.Calendar;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -36,5 +38,18 @@ public class UpgradeManagerTest {
 		Assert.assertEquals(1, manager.getLowerPrpId().size());
 		Assert.assertEquals(1, manager.getUpperPrpId().size());
 		Assert.assertEquals("2c92a0f939a9bc1a0139b8c300c96b31", manager.getCurrentPrpId());
+	}
+	
+	@Test
+	public void testGetLatestChargedThroughDate() {
+		UpgradeManager manager = new UpgradeManager();
+		Calendar latest = manager.getLatestChargedThroughDate("2c92a0f93a6d39a0013a910522443932");
+		Assert.assertNotNull(latest);
+	}
+	
+	@Test
+	public void testDowngradeAmendment() {
+		UpgradeManager manager = new UpgradeManager();
+		manager.downgrade("2c92a0f93a6d39a0013a91052219392d", "2c92a0f93a6d39a0013a910522443932", "2c92a0fb3a6d39a7013a8ff883e808fe", false);
 	}
 }

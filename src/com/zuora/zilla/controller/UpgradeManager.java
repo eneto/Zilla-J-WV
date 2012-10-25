@@ -1,18 +1,26 @@
 package com.zuora.zilla.controller;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.zuora.api.AmendOptions;
+import com.zuora.api.AmendRequest;
+import com.zuora.api.AmendResult;
+import com.zuora.api.PreviewOptions;
 import com.zuora.api.QueryResult;
+import com.zuora.api.RatePlanData;
+import com.zuora.api.object.Amendment;
 import com.zuora.api.object.ProductRatePlan;
-import com.zuora.api.object.ProductRatePlanCharge;
 import com.zuora.api.object.RatePlan;
+import com.zuora.api.object.RatePlanCharge;
 import com.zuora.api.object.ZObject;
-import com.zuora.zilla.model.AmenderCharge;
-import com.zuora.zilla.model.AmenderPlan;
 import com.zuora.zilla.model.AmenderSubscription;
 import com.zuora.zilla.util.ZApi;
 
@@ -131,57 +139,127 @@ public class UpgradeManager {
 		}
 	}
 	
-	public void retrieveProductsFromCatalog() {
+	public void downgrade(String subscriptionId, String oldRatePlanId, String newProductRatePlanId, boolean preview) {
+//		AmenderResult amenderResult = new AmenderResult();
 		
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+		df.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
+		
+		Calendar endOfCycle = getLatestChargedThroughDate(oldRatePlanId);
+		
+		// If it's null, no charge has been invoiced, so we can put today's date
+		if (endOfCycle == null) {
+			logger.debug("No charge has been invoiced, defaulting to today's date");
+			endOfCycle = Calendar.getInstance();
+		}
+		
+		// Step #1: Remove the current rate plan
+		Amendment removeProductAmendment = new Amendment();
+		
+		removeProductAmendment.setName("Remove Product - Downgrade");
+		removeProductAmendment.setStatus("Completed");
+		removeProductAmendment.setType("RemoveProduct");
+		removeProductAmendment.setSubscriptionId(subscriptionId);
+		removeProductAmendment.setContractEffectiveDate(endOfCycle);
+		removeProductAmendment.setServiceActivationDate(endOfCycle);
+		removeProductAmendment.setCustomerAcceptanceDate(endOfCycle);
+		removeProductAmendment.setEffectiveDate(endOfCycle);
+		
+		
+		RatePlanData rpd = new RatePlanData();
+		RatePlan rp = new RatePlan();
+		rp.setAmendmentSubscriptionRatePlanId(oldRatePlanId);
+		rpd.setRatePlan(rp);
+		removeProductAmendment.setRatePlanData(rpd);
+		
+		// Step #2: Option for the first amendment = NO invoice generation
+		AmendOptions ao = new AmendOptions();
+		ao.setGenerateInvoice(false);
+		ao.setProcessPayments(false);
+		
+		PreviewOptions po = new PreviewOptions();
+		po.setEnablePreviewMode(preview);
+		po.setNumberOfPeriods(1);
+		
+		AmendRequest amReq = new AmendRequest();
+		
+		amReq.setAmendments(new Amendment[] { removeProductAmendment } );
+		amReq.setAmendOptions(ao);
+		amReq.setPreviewOptions(po);
+		
+		try {
+			AmendResult[] amResp = zapi.zAmend(new AmendRequest[] { amReq });
+		} catch (Exception e) {
+			logger.error("Error during amend #1 - downgrade");
+			e.printStackTrace();
+		}
+		
+		// Step #3: Add the new rate plan
+		Amendment addProductAmendment = new Amendment();
+		
+		addProductAmendment.setName("Add Product - Downgrade");
+		addProductAmendment.setStatus("Completed");
+		addProductAmendment.setType("NewProduct");
+		addProductAmendment.setSubscriptionId(subscriptionId);
+		addProductAmendment.setContractEffectiveDate(endOfCycle);
+		addProductAmendment.setServiceActivationDate(endOfCycle);
+		addProductAmendment.setCustomerAcceptanceDate(endOfCycle);
+		addProductAmendment.setEffectiveDate(endOfCycle);
+		
+		RatePlanData rpd2 = new RatePlanData();
+		RatePlan rp2 = new RatePlan();
+		rp2.setProductRatePlanId(newProductRatePlanId);
+		rpd2.setRatePlan(rp2);
+		addProductAmendment.setRatePlanData(rpd2);
+		
+		// Step #4: Option for the second amendment = Invoice Generation
+		AmendOptions ao2 = new AmendOptions();
+		ao2.setGenerateInvoice(true);
+		ao2.setProcessPayments(false);
+		
+		AmendRequest amReq2 = new AmendRequest();
+		
+		amReq2.setAmendments(new Amendment[] { addProductAmendment });
+		amReq2.setAmendOptions(ao2);
+		
+		PreviewOptions po2 = new PreviewOptions();
+		po2.setEnablePreviewMode(preview);
+		
+		amReq2.setPreviewOptions(po2);
+		
+		try {
+			AmendResult[] amResp = zapi.zAmend(new AmendRequest[] { amReq2 });
+		} catch (Exception e) {
+			logger.error("Error during amend #2 - downgrade");
+			e.printStackTrace();
+		}
+
 	}
 	
-//	public AmenderPlan getAmenderPlanFromId(String productRatePlanId) {
-//		AmenderPlan amenderPlan = null;
-//		
-//		// Get the name and description for this product
-//		try {
-//			QueryResult ratePlanQuery = zapi.zQuery("select Name, Description from ProductRatePlan where Id='"
-//					+ productRatePlanId + "'");
-//			
-//			ProductRatePlan prp = (ProductRatePlan) ratePlanQuery.getRecords(0);
-//			
-//			amenderPlan = new AmenderPlan();
-//			amenderPlan.setAmendmentId(prp.getId());
-//			amenderPlan.setName(prp.getName());
-//			amenderPlan.setDescription(prp.getDescription());
-//			
-//			
-//		} catch (Exception e) {
-//			logger.error("Error while querying product rate plan " + productRatePlanId + " | " + e.getMessage());
-//		}
-//		
-//		// Get the charges
-//		amenderPlan.setAmenderCharges(getAmenderChargesFromId(productRatePlanId));
-//		
-//		return amenderPlan;
-//	}
-	
-//	public List<AmenderCharge> getAmenderChargesFromId(String productRatePlanId) {
-//		List<AmenderCharge> charges = new ArrayList<AmenderCharge>();
-//		
-//		try {
-//			QueryResult chargesResult = zapi.zQuery("SELECT Id,Name,"
-//					+ "ProductRatePlanChargeId,ChargeModel,ChargeType,UOM,"
-//					+ "Quantity,ChargedThroughDate FROM ProductRatePlanCharge "
-//					+ "WHERE ProductRatePlanId='" + productRatePlanId + "'");
-//			
-//			for (ZObject zObject : chargesResult.getRecords()) {
-//				ProductRatePlanCharge prpc = (ProductRatePlanCharge) zObject;
-//				
-//			}
-//			
-//		} catch (Exception e) {
-//			logger.error("Error retrieving charges for product rate plan "
-//					+ productRatePlanId + " | " + e.getMessage());
-//		}
-//		
-//		return charges;
-//	}
+	/**
+	 * Go through all the charges for a precise RatePlanId and return the latest date
+	 * @param ratePlanId
+	 * @return NULL if no charge has been invoiced
+	 */
+	public Calendar getLatestChargedThroughDate(String ratePlanId) {
+		Calendar latest = null;
+		try {
+			QueryResult chargesResult = zapi.zQuery("Select Id, Name, ChargedThroughDate from RatePlanCharge where RatePlanId='" + ratePlanId + "'");
+			
+			for (ZObject zObject : chargesResult.getRecords()) {
+				RatePlanCharge rpc = (RatePlanCharge) zObject;
+				if (latest == null) {
+					latest = rpc.getChargedThroughDate();
+				} else if (latest.compareTo(rpc.getChargedThroughDate()) < 0) {
+					latest = rpc.getChargedThroughDate();
+				}
+			}
+		} catch (Exception e) {
+			logger.error("Error getting latest charged date from RP ID: " + ratePlanId + " | " + e.getMessage());
+		}
+		logger.debug("Returned " + latest);
+		return latest;
+	}
 	
 	/** GETTERS */
 	
