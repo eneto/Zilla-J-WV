@@ -37,6 +37,20 @@ public class UpgradeManager {
 	}
 	
 	/**
+	 * If you precise an account name, then we populate immediately the
+	 * two lists and the current Rate plan ID
+	 * @param accountName
+	 */
+	public UpgradeManager(String accountName) {
+		zapi = new ZApi();
+		lowerPrpId = new ArrayList<String>();
+		upperPrpId = new ArrayList<String>();
+		String currentSubscriptionRPID = getCurrentSubscriptionRatePlanId(accountName);
+		String productRatePlanId = getAssociatedProductRatePlanId(currentSubscriptionRPID);
+		retrieveGroup(productRatePlanId);
+	}
+	
+	/**
 	 * To retrieve the rate plan ID from the current subscription
 	 * @param accountName Value passed from the HttpSession (see client)
 	 * @return Id of the RatePlan associated with the current subscription

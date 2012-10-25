@@ -623,4 +623,33 @@ public class App extends HttpServlet {
 			}
 		}
 	}
+
+
+	public String getUpgradeDowngrade(HttpServletRequest request) {
+		HttpSession session = request.getSession();
+		String accountName = (String) session.getAttribute("username");
+		if (accountName == null) {
+			return output("Error: username not set in session");
+		}
+		UpgradeManager manager = new UpgradeManager(accountName);
+		
+		// Get the Catalog Rate Plan from the list of downgrade plan
+		List<CatalogRatePlan> lowerRatePlan = new ArrayList<CatalogRatePlan>();
+		for (String prpId : manager.getLowerPrpId()) {
+			lowerRatePlan.add(Catalog.getRatePlan(prpId));
+		}
+		
+		// Same with the list of upgrade plans
+		List<CatalogRatePlan> upperRatePlan = new ArrayList<CatalogRatePlan>();
+		for (String prpId : manager.getUpperPrpId()) {
+			upperRatePlan.add(Catalog.getRatePlan(prpId));
+		}
+		
+		Map<String, Object> res = new HashMap<String, Object>();
+		res.put("lowerRatePlan", lowerRatePlan);
+		res.put("upperRatePlan", upperRatePlan);
+		res.put("currentRatePlan", Catalog.getRatePlan(manager.getCurrentPrpId()));
+		
+		return output(res);
+	}
 }

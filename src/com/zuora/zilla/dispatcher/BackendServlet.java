@@ -43,6 +43,8 @@ public class BackendServlet extends HttpServlet {
 			App backend = new App();
 			if (type.equalsIgnoreCase("AddItemToCart")) {
 				output = backend.addItemToCart(request);
+			} else if (type.equalsIgnoreCase("ReadUpgradeDowngrade")) {
+				output = backend.getUpgradeDowngrade(request);
 			} else if (type.equalsIgnoreCase("CheckEmailAvailability")) {
 				output = backend.checkEmailAvailability(request);
 			} else if (type.equalsIgnoreCase("EmptyCart")) {
