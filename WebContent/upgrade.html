@@ -12,9 +12,74 @@
 	
 		$(document).ready(function(){
 			$.getJSON("backend?type=ReadUpgradeDowngrade", function(data){
+				var html = ""; // Prepare the final HTML output to be appended in the table
+				for (var i in data.msg[0].lowerRatePlan) {
+					var rp = data.msg[0].lowerRatePlan[i];
+					html += "<tr>";
+					html += "    <td>";
+					html += "     <ul class='plan_list'>";
+					html += "        <li class='border_bottom_dashed'><span class='clear-block'></span>";
+					html += "          <div class='rateplan_info' >";
+					html += "           <span class='rateplan_name'>"+rp.productName+" : "+rp.Name+"</span><br>";
+					html += "          	<span class='rateplan_description'>"+rp.Description+"</span> ";
+					if(rp.quantifiable)
+						html += "		<br># "+ rp.Uom +": <input type='text' class='w80' id='qty_"+rp.Id+"' value='1' onkeypress='return isNumberKey(event)' />";
+					html += "          </div>";
+					html += "          <div class='item_button_block'>";
+					html += "           <a href='javascript:' class='btn_submit item_button btn_downgrade' id='downgrade_to_"+rp.Id+"' >Downgrade</a>";
+					html += "          </div>";
+					html += "          <div class='clear-block'></div>";
+					html += "        </li>";
+					html += "    </ul>";
+					html += "    </td>";
+					html += "</tr>";
+				}
 				
+				var rp = data.msg[0].currentRatePlan;
+				html += "<tr>";
+				html += "    <td>";
+				html += "     <ul class='plan_list'>";
+				html += "        <li class='border_bottom_dashed'><span class='clear-block'></span>";
+				html += "          <div class='rateplan_info' >";
+				html += "           <span class='rateplan_name'>"+rp.productName+" : "+rp.Name+"</span><br>";
+				html += "          	<span class='rateplan_description'>"+rp.Description+"</span> ";
+				if(rp.quantifiable)
+					html += "		<br># "+ rp.Uom +": <input type='text' class='w80' id='qty_"+rp.Id+"' value='1' onkeypress='return isNumberKey(event)' />";
+				html += "          </div>";
+				html += "          <div class='item_button_block'>";
+				html += "           Your current plan";
+				html += "          </div>";
+				html += "          <div class='clear-block'></div>";
+				html += "        </li>";
+				html += "    </ul>";
+				html += "    </td>";
+				html += "</tr>";
+				
+				for (var i in data.msg[0].upperRatePlan) {
+					var rp = data.msg[0].upperRatePlan[i];
+					html += "<tr>";
+					html += "    <td>";
+					html += "     <ul class='plan_list'>";
+					html += "        <li class='border_bottom_dashed'><span class='clear-block'></span>";
+					html += "          <div class='rateplan_info' >";
+					html += "           <span class='rateplan_name'>"+rp.productName+" : "+rp.Name+"</span><br>";
+					html += "          	<span class='rateplan_description'>"+rp.Description+"</span> ";
+					if(rp.quantifiable)
+						html += "		<br># "+ rp.Uom +": <input type='text' class='w80' id='qty_"+rp.Id+"' value='1' onkeypress='return isNumberKey(event)' />";
+					html += "          </div>";
+					html += "          <div class='item_button_block'>";
+					html += "           <a href='javascript:' class='btn_submit item_button btn_upgrade' id='upgrade_to_"+rp.Id+"' >Upgrade</a>";
+					html += "          </div>";
+					html += "          <div class='clear-block'></div>";
+					html += "        </li>";
+					html += "    </ul>";
+					html += "    </td>";
+					html += "</tr>";
+				}
+				$('#rate-plan-table').html(html);
 			});
 		});
+
 	
 	</script>
 </head>
@@ -36,6 +101,16 @@
 </div>
 
 <!-- end header -->
+
+<div id="web_main">
+	<div id="main" class="edit_dv">
+		<div id="left-main">
+			<table id="rate-plan-table">
+			</table>
+		</div>
+	</div>
+</div>
+
 
 <!-- start footer -->
 
