@@ -77,8 +77,22 @@
 					html += "</tr>";
 				}
 				$('#rate-plan-table').html(html);
+				$('.btn_downgrade').click(function(event){
+					downgradeTo(event);
+				});
+				$('.btn_upgrade').click(function(event){
+					upgradeTo(event);
+				});
 			});
 		});
+		
+		function downgradeTo(event) {
+			alert("downgrade");
+		}
+		
+		function upgradeTo(event) {
+			alert("upgrade");
+		}
 
 	
 	</script>
