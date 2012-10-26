@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.zuora.api.AmendOptions;
 import com.zuora.api.AmendRequest;
 import com.zuora.api.AmendResult;
+import com.zuora.api.DeleteResult;
 import com.zuora.api.PreviewOptions;
 import com.zuora.api.QueryResult;
 import com.zuora.api.RatePlanData;
@@ -20,6 +21,7 @@ import com.zuora.api.object.Amendment;
 import com.zuora.api.object.ProductRatePlan;
 import com.zuora.api.object.RatePlan;
 import com.zuora.api.object.RatePlanCharge;
+import com.zuora.api.object.Subscription;
 import com.zuora.api.object.ZObject;
 import com.zuora.zilla.model.AmenderSubscription;
 import com.zuora.zilla.util.ZApi;
@@ -139,11 +141,34 @@ public class UpgradeManager {
 		}
 	}
 	
+	/**
+	 * Upgrade or downgrade a subscription (remove old rate plan, add new rate
+	 * plan)
+	 * 
+	 * @param subscriptionId
+	 *            The subscription ID to upgrade/downgrade
+	 * @param oldRatePlanId
+	 *            The rate plan to remove
+	 * @param newProductRatePlanId
+	 *            The product rate plan to add
+	 * @param preview
+	 *            boolean to see if the update is a preview
+	 * @param isUpgrade
+	 *            define the way of the operation (upgrade or downgrade). The
+	 *            difference is found in the effective date of the amendment (if
+	 *            it's an upgrade, effective immediately, if it's a downgrade,
+	 *            and the charges have already been invoiced, then the amendment
+	 *            will be effective at the end of the term to avoid proration.
+	 */
 	public void downgradeOrUpgrade(String subscriptionId, String oldRatePlanId, String newProductRatePlanId, boolean preview, boolean isUpgrade) {
 //		AmenderResult amenderResult = new AmenderResult();
 		
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 		df.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
+		
+		// Clean the subscriptions based on the original subscription ID
+		String originalId = getOriginalId(subscriptionId);
+		removeFutureAmendments(originalId);
 		
 		Calendar endOfCycle = null;
 		
@@ -265,6 +290,78 @@ public class UpgradeManager {
 		}
 		logger.debug("Returned " + latest);
 		return latest;
+	}
+	
+	/**
+	 * Retrieve the original subscription ID
+	 * @param subscriptionId
+	 * @return
+	 */
+	public String getOriginalId(String subscriptionId) {
+		QueryResult subQuery = null;
+		
+		try {
+			subQuery = zapi.zQuery("select SubscriptionId from Subscription where Id='" + subscriptionId + "'");
+		} catch (Exception e) {
+			logger.error("Error retrieving original ID for subscription ID " + subscriptionId + " | " + e.getMessage());
+		}
+		
+		Subscription sub = (Subscription) subQuery.getRecords(0);
+		return sub.getOriginalId();
+	}
+	
+	/**
+	 * Return all the IDs that a subscription can have (due to amendments)
+	 * @param subscriptionName
+	 * @return A list of IDs (String)
+	 */
+	public List<String> getSubscriptionIDs(String subscriptionName) {
+		List<String> IDs = new ArrayList<String>();
+		
+		try {
+			QueryResult subQuery = zapi
+					.zQuery("select Id from Subscription where Name='"
+							+ subscriptionName + "'");
+			
+			for (ZObject zObject : subQuery.getRecords())
+				IDs.add(zObject.getId());
+
+		} catch (Exception e) {
+			logger.error("Error querying the Subscription IDs for name = "
+					+ subscriptionName + " | " + e.getMessage());
+		}
+		
+		return IDs;
+	}
+	
+	/**
+	 * When given a Subscription ID that may have active amendment in the future, try
+	 * deleting it, in order to clean it before additional amendments
+	 * @param originalSubscriptionId
+	 */
+	public void removeFutureAmendments(String originalSubscriptionId) {
+
+		try {
+			QueryResult subscriptionResult = zapi
+					.zQuery("select Id, Version from Subscription where OriginalId='"
+							+ originalSubscriptionId + "' and Status='Active'");
+			
+			Subscription sub = (Subscription) subscriptionResult.getRecords(0);
+			
+			// Try to delete this subscription (if version > 1)
+			if (sub.getVersion() != 1) {
+				DeleteResult[] deleteResult = zapi.zDelete(new String[] { sub.getId() }, "Subscription");
+				
+				// If the delete operation is successful, recursively try to delete the subscription
+				if (deleteResult[0].getSuccess())
+					removeFutureAmendments(originalSubscriptionId);
+			}
+			
+		} catch (Exception e) {
+			logger.error("Error retrieving Subscription where OriginalId='"
+					+ originalSubscriptionId + "' | " + e.getMessage());
+		}
+		
 	}
 	
 	/** GETTERS */

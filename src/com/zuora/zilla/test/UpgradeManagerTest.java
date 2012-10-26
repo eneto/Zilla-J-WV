@@ -50,6 +50,11 @@ public class UpgradeManagerTest {
 	@Test
 	public void testDowngradeAmendment() {
 		UpgradeManager manager = new UpgradeManager();
-		manager.downgradeOrUpgrade("2c92a0f93a6d39a0013a91052219392d", "2c92a0f93a6d39a0013a910522443932", "2c92a0fb3a6d39a7013a8ff883e808fe", false, true);
+		manager.downgradeOrUpgrade(	"2c92a0fb3a6d39a7013a9a71d3183508",
+									"2c92a0fb3a6d39a7013a9a71d346350c",
+									"2c92a0f93a6d39a0013a8ff8476b4143",
+									false, false);
+		// Then try to delete this amendment
+		manager.removeFutureAmendments("2c92a0fb3a6d39a7013a9a71d3183508");
 	}
 }
