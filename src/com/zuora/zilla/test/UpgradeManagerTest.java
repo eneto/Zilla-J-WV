@@ -50,6 +50,6 @@ public class UpgradeManagerTest {
 	@Test
 	public void testDowngradeAmendment() {
 		UpgradeManager manager = new UpgradeManager();
-		manager.downgrade("2c92a0f93a6d39a0013a91052219392d", "2c92a0f93a6d39a0013a910522443932", "2c92a0fb3a6d39a7013a8ff883e808fe", false);
+		manager.downgradeOrUpgrade("2c92a0f93a6d39a0013a91052219392d", "2c92a0f93a6d39a0013a910522443932", "2c92a0fb3a6d39a7013a8ff883e808fe", false, true);
 	}
 }

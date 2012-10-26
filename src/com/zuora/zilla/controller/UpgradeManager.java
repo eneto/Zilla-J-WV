@@ -139,15 +139,21 @@ public class UpgradeManager {
 		}
 	}
 	
-	public void downgrade(String subscriptionId, String oldRatePlanId, String newProductRatePlanId, boolean preview) {
+	public void downgradeOrUpgrade(String subscriptionId, String oldRatePlanId, String newProductRatePlanId, boolean preview, boolean isUpgrade) {
 //		AmenderResult amenderResult = new AmenderResult();
 		
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 		df.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
 		
-		Calendar endOfCycle = getLatestChargedThroughDate(oldRatePlanId);
+		Calendar endOfCycle = null;
 		
-		// If it's null, no charge has been invoiced, so we can put today's date
+		// If it's an upgrade, effective immediately
+		if (isUpgrade)
+			endOfCycle = Calendar.getInstance();
+		else
+			endOfCycle = getLatestChargedThroughDate(oldRatePlanId);
+		
+		// If it's null, no charge has been invoiced, so we can put today's date even if it's a downgrade
 		if (endOfCycle == null) {
 			logger.debug("No charge has been invoiced, defaulting to today's date");
 			endOfCycle = Calendar.getInstance();
@@ -156,7 +162,7 @@ public class UpgradeManager {
 		// Step #1: Remove the current rate plan
 		Amendment removeProductAmendment = new Amendment();
 		
-		removeProductAmendment.setName("Remove Product - Downgrade");
+		removeProductAmendment.setName("Remove Product");
 		removeProductAmendment.setStatus("Completed");
 		removeProductAmendment.setType("RemoveProduct");
 		removeProductAmendment.setSubscriptionId(subscriptionId);
@@ -197,7 +203,7 @@ public class UpgradeManager {
 		// Step #3: Add the new rate plan
 		Amendment addProductAmendment = new Amendment();
 		
-		addProductAmendment.setName("Add Product - Downgrade");
+		addProductAmendment.setName("Add Product");
 		addProductAmendment.setStatus("Completed");
 		addProductAmendment.setType("NewProduct");
 		addProductAmendment.setSubscriptionId(subscriptionId);
