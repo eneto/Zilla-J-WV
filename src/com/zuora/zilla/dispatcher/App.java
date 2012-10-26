@@ -547,6 +547,44 @@ public class App extends HttpServlet {
 		data.setSuccess(true);
 		return output(data);
 	}
+	
+	/**
+	 * This function allows the user to downgrade his current product
+	 */
+	public String downgradeOrUpgradeTo(HttpServletRequest request, boolean isUpgrade) {
+		
+		HttpSession session = request.getSession();
+		String accountName = (String) session.getAttribute("username");
+		String newProductRatePlanId = request.getParameter("prpId");
+		String subscriptionId = null;
+		
+		try {
+			AmenderSubscription subscription = new SubscriptionManager().getCurrentSubscription(accountName);
+			subscriptionId = subscription.getSubscriptionId();
+			
+		} catch (Exception e) {
+			ResponseAction resp = new ResponseAction();
+			resp.setError("Error retrieving current subscription");
+			resp.setSuccess(false);
+			return output(resp);
+		}
+		
+		UpgradeManager manager = new UpgradeManager();
+		AmenderResult amendResult = manager.downgradeOrUpgrade(subscriptionId,
+				manager.getCurrentSubscriptionRatePlanId(accountName), newProductRatePlanId, false, isUpgrade);
+		
+		if (!amendResult.isSuccess()) {
+			ResponseAction resp = new ResponseAction();
+			resp.setError("Error downgrading/upgrading amendment");
+			resp.setSuccess(false);
+			return output(resp);
+		}
+
+		ResponseAction resp = new ResponseAction();
+		resp.setSuccess(true);
+		resp.setData("Amendment successful!");
+		return output(resp);
+	}
 
 	/**
 	 * This function returns the final JSON output annotated with some security

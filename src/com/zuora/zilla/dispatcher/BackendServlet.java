@@ -43,50 +43,79 @@ public class BackendServlet extends HttpServlet {
 			App backend = new App();
 			if (type.equalsIgnoreCase("AddItemToCart")) {
 				output = backend.addItemToCart(request);
+				
 			} else if (type.equalsIgnoreCase("ReadUpgradeDowngrade")) {
 				output = backend.getUpgradeDowngrade(request);
+				
 			} else if (type.equalsIgnoreCase("CheckEmailAvailability")) {
 				output = backend.checkEmailAvailability(request);
+				
 			} else if (type.equalsIgnoreCase("EmptyCart")) {
 				output = backend.emptyCart(request);
+				
 			} else if (type.equalsIgnoreCase("GetExistingIframeSrc")) {
 				output = backend.getExistingIframeSrc(request);
+				
 			} else if (type.equalsIgnoreCase("GetInitialCart")) {
 				output = backend.getInitialCart(request);
+				
 			} else if (type.equalsIgnoreCase("GetLatestSubscription")) {
 				output = backend.getLatestSubscription(request);
+				
 			} else if (type.equalsIgnoreCase("GetNewIframeSrc")) {
 				output = backend.getNewIframeSrc();
+				
 			} else if (type.equalsIgnoreCase("IsUserLoggedIn")) {
 				output = backend.isUserLoggedIn(request);
+				
 			} else if (type.equalsIgnoreCase("PreviewCurrentCart")) {
 				output = backend.previewCurrentCart(request);
+				
 			} else if (type.equalsIgnoreCase("PreviewAddRatePlan")) {
 				output = backend.previewAddRatePlan(request);
+				
 			} else if (type.equalsIgnoreCase("AddRatePlan")) {
 				output = backend.addRatePlan(request);
+				
 			} else if (type.equalsIgnoreCase("PreviewRemoveRatePlan")) {
 				output = backend.previewRemoveRatePlan(request);
+				
 			} else if (type.equalsIgnoreCase("RemoveRatePlan")) {
-				output = backend.removeRatePlan(request);				
+				output = backend.removeRatePlan(request);	
+				
 			} else if (type.equalsIgnoreCase("ReadCatalog")) {
 				output = backend.readCatalog();
+				
 			} else if (type.equalsIgnoreCase("RefreshCatalog")) {
 				output = backend.refreshCatalog();
+				
 			} else if (type.equalsIgnoreCase("RemoveItemFromCart")) {
 				output = backend.removeItemFromCart(request);
+				
 			} else if (type.equalsIgnoreCase("RemovePaymentMethod")) {
-				output = backend.removePaymentMethod(request);				
+				output = backend.removePaymentMethod(request);
+				
 			} else if (type.equalsIgnoreCase("SubscribeWithCurrentCart")) {
 				output = backend.subscribeWithCurrentCart(request);
+				
 			} else if (type.equalsIgnoreCase("UpdateContact")) {
 				output = backend.updateContact(request);
+				
 			} else if (type.equalsIgnoreCase("ChangeDefaultPaymentMethod")) {
-				output = backend.changeDefaultPaymentMethod(request);				
+				output = backend.changeDefaultPaymentMethod(request);	
+				
+			} else if (type.equalsIgnoreCase("DowngradeTo")) {
+				output = backend.downgradeOrUpgradeTo(request, false);
+				
+			} else if (type.equalsIgnoreCase("UpgradeTo")) {
+				output = backend.downgradeOrUpgradeTo(request, true);
+				
 			} else if (type.equalsIgnoreCase("GetCompleteSummary")) {
 				output = backend.getCompleteSummary(request);
+				
 			} else if (type.equalsIgnoreCase("GetPaymentMethodSummary")) {
 				output = backend.getPaymentMethodSummary(request);
+				
 			} else if (type.equalsIgnoreCase("GetLastPdf")) {
 				HttpSession session = request.getSession();
 				String email = (String) session.getAttribute("username");

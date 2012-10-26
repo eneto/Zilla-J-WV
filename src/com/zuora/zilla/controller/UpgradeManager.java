@@ -23,6 +23,7 @@ import com.zuora.api.object.RatePlan;
 import com.zuora.api.object.RatePlanCharge;
 import com.zuora.api.object.Subscription;
 import com.zuora.api.object.ZObject;
+import com.zuora.zilla.model.AmenderResult;
 import com.zuora.zilla.model.AmenderSubscription;
 import com.zuora.zilla.util.ZApi;
 
@@ -104,6 +105,7 @@ public class UpgradeManager {
 			
 			// Save this so we now it's the current rate plan used
 			currentPrpId = prp.getId();
+
 			Integer currentGroupLevel = Integer.parseInt(prp.getUpgradeLevel__c());
 			
 			QueryResult groupResult = zapi.zQuery(
@@ -160,8 +162,13 @@ public class UpgradeManager {
 	 *            and the charges have already been invoiced, then the amendment
 	 *            will be effective at the end of the term to avoid proration.
 	 */
-	public void downgradeOrUpgrade(String subscriptionId, String oldRatePlanId, String newProductRatePlanId, boolean preview, boolean isUpgrade) {
-//		AmenderResult amenderResult = new AmenderResult();
+	public AmenderResult downgradeOrUpgrade(String subscriptionId, String oldRatePlanId, String newProductRatePlanId, boolean preview, boolean isUpgrade) {
+		
+		logger.debug("Starting downgrade/upgrade with subscription ID = " + subscriptionId);
+		logger.debug("Old rate plan ID = " + oldRatePlanId);
+		logger.debug("New product rate = " + newProductRatePlanId);
+		
+		AmenderResult amenderResult = new AmenderResult();
 		
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 		df.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
@@ -220,9 +227,11 @@ public class UpgradeManager {
 		
 		try {
 			AmendResult[] amResp = zapi.zAmend(new AmendRequest[] { amReq });
+			amenderResult.setSuccess(amResp[0].getSuccess());
 		} catch (Exception e) {
 			logger.error("Error during amend #1 - downgrade");
 			e.printStackTrace();
+			amenderResult.setSuccess(false);
 		}
 		
 		// Step #3: Add the new rate plan
@@ -260,11 +269,14 @@ public class UpgradeManager {
 		
 		try {
 			AmendResult[] amResp = zapi.zAmend(new AmendRequest[] { amReq2 });
+			amenderResult.setSuccess(amResp[0].getSuccess());
 		} catch (Exception e) {
 			logger.error("Error during amend #2 - downgrade");
 			e.printStackTrace();
+			amenderResult.setSuccess(false);
 		}
-
+		
+		return amenderResult;
 	}
 	
 	/**
@@ -301,7 +313,7 @@ public class UpgradeManager {
 		QueryResult subQuery = null;
 		
 		try {
-			subQuery = zapi.zQuery("select SubscriptionId from Subscription where Id='" + subscriptionId + "'");
+			subQuery = zapi.zQuery("select Id from Subscription where Id='" + subscriptionId + "'");
 		} catch (Exception e) {
 			logger.error("Error retrieving original ID for subscription ID " + subscriptionId + " | " + e.getMessage());
 		}

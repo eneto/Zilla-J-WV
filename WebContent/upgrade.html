@@ -87,11 +87,29 @@
 		});
 		
 		function downgradeTo(event) {
-			alert("downgrade");
+			var buttonId = event.target.id;
+			var prpId = buttonId.split('downgrade_to_')[1];
+			
+			$.getJSON("backend?type=DowngradeTo", {prpId:prpId},
+					function(data){
+						alert(data);
+		        	}
+				);
+
+			alert(prpId);
 		}
 		
 		function upgradeTo(event) {
-			alert("upgrade");
+			var buttonId = event.target.id;
+			var prpId = buttonId.split('upgrade_to_')[1];
+			
+			$.getJSON("backend?type=UpgradeTi", {prpId:prpId},
+					function(data){
+						alert(data);
+		        	}
+				);
+
+			alert(prpId);
 		}
 
 	
