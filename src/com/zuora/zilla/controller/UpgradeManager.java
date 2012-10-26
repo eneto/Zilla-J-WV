@@ -313,7 +313,7 @@ public class UpgradeManager {
 		QueryResult subQuery = null;
 		
 		try {
-			subQuery = zapi.zQuery("select Id from Subscription where Id='" + subscriptionId + "'");
+			subQuery = zapi.zQuery("select OriginalId from Subscription where Id='" + subscriptionId + "'");
 		} catch (Exception e) {
 			logger.error("Error retrieving original ID for subscription ID " + subscriptionId + " | " + e.getMessage());
 		}

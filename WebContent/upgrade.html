@@ -103,7 +103,7 @@
 			var buttonId = event.target.id;
 			var prpId = buttonId.split('upgrade_to_')[1];
 			
-			$.getJSON("backend?type=UpgradeTi", {prpId:prpId},
+			$.getJSON("backend?type=UpgradeTo", {prpId:prpId},
 					function(data){
 						alert(data);
 		        	}
