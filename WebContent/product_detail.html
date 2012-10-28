@@ -5,38 +5,35 @@
 <link type="text/css" rel="stylesheet" href="css/style.css" />
 <link type="text/css" rel="stylesheet" href="css/karma-teal-grey.css" />
 <link href="css/structure.css" rel="stylesheet" type="text/css" />
-<title>Select Products</title>
+<title>Product Detail</title>
 <script type="text/javascript" src="js/jquery.js"></script>
 <script type="text/javascript" src="js/function.js"></script>
 <script type="application/javascript" >
+
+	function getUrlVars()
+	{
+	    var vars = [], hash;
+	    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+	    for(var i = 0; i < hashes.length; i++)
+	    {
+	        hash = hashes[i].split('=');
+	        vars.push(hash[0]);
+	        vars[hash[0]] = hash[1];
+	    }
+	    return vars;
+	}
 
 	$(document).ready(function(){
 		$("#infor").hide();
 		$("#loading").show();
 		
-		getInitialCart();
+		//This is where the logic goes to display everything.
 		
-		$.getJSON("backend?type=ReadCatalog",
-			function(data){
-				var msg = data.msg[0];
-				if(!msg.success){
-					alert("There was an issue retrieving the catalog. Please try again later.");
-				} else {
-					listProducts(msg.catalogGroups);
-				}
-        	}
-		);
-		$("#remove_all_button").click(function(){
-			emptyCart();
-		});
+		var vars = getUrlVars();
+		var group = vars["group"];
+		var level = vars["level"];
+		alert("Display plan of type [" + group + "], Level [" + level + "]");
 	});
-	
-	function isNumberKey(evt){
-		var charCode = (evt.which) ? evt.which : event.keyCode
-		if (charCode > 31 && (charCode < 48 || charCode > 57))
-			return false;
-		return true;
-	}
 	
 	var emptyCart = function(){
 		$.getJSON("backend?type=EmptyCart",
@@ -44,37 +41,6 @@
 				refreshCart(data.msg);
         	}
 		);
-	}
-
-	var getInitialCart = function(){
-		$.getJSON("backend?type=GetInitialCart",
-			function(data){
-				refreshCart(data.msg);
-        	}
-		);
-	}
-
-	var refreshCart = function(msg){
-		var html = "";
-
-		for(var i in msg[0].cart_items){
-			var citem = msg[0].cart_items[i];
-			html+="<li class='border_bottom_dashed'>";
-            html+="  <div class='rateplan_info'>";
-			html+="    <span class='rateplan_name'>"+citem.ProductName+" : "+citem.ratePlanName+"</span><br>";
-			if(citem.quantity!='null'){
-				html+="    <span class='rateplan_name'>"+citem.uom+": <input type='text' disabled='true' value='" +citem.quantity+ "' /></span><br>";
-			}
-            html+="  </div>";
-            html+="  <a href='javascript:' class='btn_submit item_button floatRight btn_remove' id='remove_item_"+citem.itemId+"'>Remove</a>";
-            html+="  <div class='clear-block'></div>";
-            html+="</li>";
-		}
-		$(".chosen_plans").html(html);
-		
-		$(".btn_remove").click(function(event){
-			removeFromCart(event);
-		});
 	}
 
 	var removeFromCart = function(event){
@@ -101,58 +67,18 @@
 		);
 	};
 
-	var listProducts = function(data){
-		$("#loading").fadeOut('fast');
+	var setupPrimaryProduct(){
+		var vars = getUrlVars();
+		var group = vars["group"];
+		var level = vars["level"];
 
-		var html = "";
-		for(var pgroupKey in data){
-			var pgroup = data[pgroupKey];
-			html += "<div class='panel-section'>";
-			html += " <h4 style='margin:15px 0 5px 0'>"+pgroup.Name+"</h4>";
-			html += " <ul class='list_dv'>";
-			var products = pgroup.products;
-			for(var prodKey in products){
-				var prod = products[prodKey];
-				html += "<li> <span class='clear-block'></span>";
-				html += "    <div class='product'>";
-				html += "     <div class='c1'>";
-				html += "      <span class='product_name'>"+prod.Name+"</span><br>";
-				html += "      <span class='product_description'>"+prod.Description+"</span> ";
-				html += "     </div>";
-				html += "     <ul class='plan_list'>";
-				for(var rpKey in prod.ratePlans){
-					var rp = prod.ratePlans[rpKey];
-					html += "        <li class='border_bottom_dashed'><span class='clear-block'></span>";
-					html += "          <div class='rateplan_info' >";
-					html += "           <span class='rateplan_name'>"+rp.productName+" : "+rp.Name+"</span><br>";
-					html += "          	<span class='rateplan_description'>"+rp.Description+"</span> ";
-					if(rp.quantifiable)
-						html += "		<br># "+ rp.Uom +": <input type='text' class='w80' id='qty_"+rp.Id+"' value='1' onkeypress='return isNumberKey(event)' />";
-					html += "          </div>";
-					html += "          <div class='item_button_block'>";
-					html += "           <a href='javascript:' class='btn_submit item_button btn_add' id='"+rp.Id+"' >Add</a>";
-					html += "          </div>";
-					html += "          <div class='clear-block'></div>";
-					html += "        </li>";
-				}
-				html += "        </ul>";
-				html += "       </div>";
-				html += "      </li>";
-			}
-			html += "    </ul>";
-			html += "  </div>";
-		}
-
-		$(".left-main.inner").append(html);
-		$(".btn_add").click(function(event){
-			addToCart(event);
-		});
+		$.getJSON("backend?type=SetupPrimaryProduct", {uGroup:group, uLevel:level},
+			function(data){
+				console.log(data);
+        	}
+		);
 	};
 
-	var addError = function(emsg){
-		$("#infor").append(emsg);
-		$("#infor").show();
-	};
 
 </script>
 </head>
@@ -194,18 +120,35 @@
     <div id="left-main">
       <div class="left-main inner">
         <div class="title">
-          <h3>Select Products</h3>
+          <h3>Selected Product</h3>
         </div>
+        
+		<div>
+			Rate Plan Description
+		</div>
+		
+		<div> 
+			Term Length
+		</div>
+
+		<div> 
+			Additional Features
+		</div>
+		
+		<div> 
+			Coupon Code
+		</div>
+		
       </div>
     </div>
     <div id="right-sub">
       <div class="right-sub inner">
         <div class="title">
-          <h3>Chosen Products</h3>
+          <h3>Previerw</h3>
         </div>
         <ul class="chosen_plans">
         </ul>
-        <a href="javascript:" id='remove_all_button' class="btn_submit item_button floatLeft" style="margin-bottom: 15px">Remove All</a> 
+
         <a href="subscribe.html" class="btn_submit item_button floatRight" style="margin-bottom: 15px">Next</a> 
         <div class="clear-block"></div>
       </div>
