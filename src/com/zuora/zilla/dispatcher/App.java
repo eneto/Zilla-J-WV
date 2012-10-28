@@ -220,7 +220,25 @@ public class App extends HttpServlet {
 		}
 		return output(summary);
 	}
-	
+
+	/**
+	 * Return payment method summary for the user with the given account name
+	 */
+	public String getProductByUpgradePath(HttpServletRequest request) {
+		HttpSession session = request.getSession();
+		String uGroup = request.getParameter("uGroup");
+		String uLevel = request.getParameter("uLevel");
+
+		ProductDetail detail=null;
+		try {
+			detail = new ProductManager().getProductByUpgradePath(uGroup, uLevel);
+		} catch (Exception e) {
+			detail.setSuccess(false);
+			detail.setError(e.getMessage());
+		}
+		return output(detail);
+	}
+
 	/**
 	 * Add a Rate Plan to the user's subscription
 	 */

@@ -72,7 +72,7 @@
 		var group = vars["group"];
 		var level = vars["level"];
 
-		$.getJSON("backend?type=SetupPrimaryProduct", {uGroup:group, uLevel:level},
+		$.getJSON("backend?type=GetProductByUpgradePath", {uGroup:group, uLevel:level},
 			function(data){
 				console.log(data);
         	}

@@ -85,6 +85,8 @@ public class BackendServlet extends HttpServlet {
 				output = backend.getCompleteSummary(request);
 			} else if (type.equalsIgnoreCase("GetPaymentMethodSummary")) {
 				output = backend.getPaymentMethodSummary(request);
+			} else if (type.equalsIgnoreCase("GetProductByUpgradePath")) {
+				output = backend.getProductByUpgradePath(request);
 			} else if (type.equalsIgnoreCase("GetLastPdf")) {
 				HttpSession session = request.getSession();
 				String email = (String) session.getAttribute("username");
