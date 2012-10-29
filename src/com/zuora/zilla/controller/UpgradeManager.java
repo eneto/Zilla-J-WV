@@ -23,6 +23,7 @@ import com.zuora.api.object.RatePlan;
 import com.zuora.api.object.RatePlanCharge;
 import com.zuora.api.object.Subscription;
 import com.zuora.api.object.ZObject;
+import com.zuora.zilla.model.AmenderPlan;
 import com.zuora.zilla.model.AmenderResult;
 import com.zuora.zilla.model.AmenderSubscription;
 import com.zuora.zilla.util.ZApi;
@@ -40,11 +41,15 @@ public class UpgradeManager {
 	
 	/** IDs from upper Product Rate Plans */
 	private List<String> upperPrpId;
+	
+	/** IDs from Product Rate Plan that correspond to a base product */
+	private List<String> baseProducts;
 
 	public UpgradeManager() {
 		zapi = new ZApi();
 		lowerPrpId = new ArrayList<String>();
 		upperPrpId = new ArrayList<String>();
+		baseProducts = retrieveBaseProduct();
 	}
 	
 	/**
@@ -56,9 +61,30 @@ public class UpgradeManager {
 		zapi = new ZApi();
 		lowerPrpId = new ArrayList<String>();
 		upperPrpId = new ArrayList<String>();
+		baseProducts = retrieveBaseProduct();
 		String currentSubscriptionRPID = getCurrentSubscriptionRatePlanId(accountName);
 		String productRatePlanId = getAssociatedProductRatePlanId(currentSubscriptionRPID);
 		retrieveGroup(productRatePlanId);
+	}
+	
+	/**
+	 * Retrieve all base product (the ones with a custom field)
+	 */
+	private List<String> retrieveBaseProduct() {
+		List<String> base = new ArrayList<String>();
+		try {
+			QueryResult catalogResult = zapi.zQuery("Select  Name, UpgradeGroup__c from ProductRatePlan");
+			for (ZObject zObject : catalogResult.getRecords()) {
+				ProductRatePlan prp = (ProductRatePlan) zObject;
+				if (prp.getUpgradeGroup__c() != null) {
+					logger.debug("Added " + prp.getName() + " to base products list");
+					base.add(prp.getName());
+				}
+			}
+		} catch (Exception e) {
+			logger.error("Error retrieving base products");
+		}
+		return base;
 	}
 	
 	/**
@@ -74,7 +100,23 @@ public class UpgradeManager {
 			logger.error("Error retrieving the current subscription | " + e.getMessage());
 		}
 		
-		return subscription.getActivePlans().get(0).getId();
+		// Parse the active plans and get the one that correspond to a base product
+		String baseProductId = null;
+		for (AmenderPlan amenderPlan : subscription.getActivePlans()) {
+			if (baseProducts.contains(amenderPlan.getName())) {
+				baseProductId = amenderPlan.getId();
+			} else {
+				logger.debug("Amender Plan " + amenderPlan.getName() + " is not a base product");
+			}
+		}
+		
+		if (baseProductId != null) {
+			logger.info("Retrieved RatePlan ID = " + baseProductId + " that corresponds to a base product");
+		} else {
+			logger.error("Error retrieving base product rate plan ID in current subscription!");
+		}
+		
+		return baseProductId;
 	}
 	
 	/**
@@ -233,6 +275,7 @@ public class UpgradeManager {
 				logger.info("Succesfully removed Rate Plan id = " + oldRatePlanId);
 			} else {
 				logger.error("The RP (id = " + oldRatePlanId + ") can't be deleted..");
+				logger.error(amResp[0].getErrors(0).getMessage());
 			}
 			amenderResult.setSuccess(amResp[0].getSuccess());
 		} catch (Exception e) {
@@ -242,15 +285,7 @@ public class UpgradeManager {
 		}
 		
 		// Step #3a: Retrieve the correct subscription ID to add this product to
-		String previousSubscriptionId = null;
-		try {
-			QueryResult res = zapi.zQuery("select Id from Subscription where Status='Active' and OriginalId='" + originalId + "'");
-			Subscription sub = (Subscription) res.getRecords(0);
-			previousSubscriptionId = sub.getId();
-			
-		} catch (Exception e) {
-			logger.error("Couldn't retrieve an active subscription with original ID = " + originalId);
-		}
+		String previousSubscriptionId = getActiveSubscriptionId(originalId);
 		
 		logger.debug("Adding product to previous subscription ID = " + previousSubscriptionId);
 		
@@ -399,6 +434,22 @@ public class UpgradeManager {
 					+ originalSubscriptionId + "' | " + e.getMessage());
 		}
 		
+	}
+	
+	/**
+	 * Get active subscription from original subscription ID
+	 */
+	public String getActiveSubscriptionId(String originalId) {
+		String activeSubscription = null;
+		try {
+			QueryResult res = zapi.zQuery("select Id from Subscription where Status='Active' and OriginalId='" + originalId + "'");
+			Subscription sub = (Subscription) res.getRecords(0);
+			activeSubscription = sub.getId();
+			
+		} catch (Exception e) {
+			logger.error("Couldn't retrieve an active subscription with original ID = " + originalId);
+		}
+		return activeSubscription;
 	}
 	
 	/** GETTERS */

@@ -570,7 +570,16 @@ public class App extends HttpServlet {
 		}
 		
 		UpgradeManager manager = new UpgradeManager();
-		AmenderResult amendResult = manager.downgradeOrUpgrade(subscriptionId,
+		
+		// Clean the subscription of future amendments before
+		String originalId = manager.getOriginalId(subscriptionId);
+		manager.removeFutureAmendments(originalId);
+		
+		// Get the newly active subscription
+		String activeSubscriptionId = manager.getActiveSubscriptionId(originalId);
+		
+		
+		AmenderResult amendResult = manager.downgradeOrUpgrade(activeSubscriptionId,
 				manager.getCurrentSubscriptionRatePlanId(accountName), newProductRatePlanId, false, isUpgrade);
 		
 		if (!amendResult.isSuccess()) {
