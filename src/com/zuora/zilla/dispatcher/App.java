@@ -222,7 +222,7 @@ public class App extends HttpServlet {
 	}
 
 	/**
-	 * Return payment method summary for the user with the given account name
+	 * Return product and add-on information for a product that's part of an upgrade path
 	 */
 	public String getProductByUpgradePath(HttpServletRequest request) {
 		HttpSession session = request.getSession();
@@ -237,6 +237,24 @@ public class App extends HttpServlet {
 			detail.setError(e.getMessage());
 		}
 		return output(detail);
+	}
+
+	/**
+	 * Return payment method summary for the user with the given account name
+	 */
+	public String previewProductDetail(HttpServletRequest request) {
+		HttpSession session = request.getSession();
+		String uGroup = request.getParameter("uGroup");
+		String uLevel = request.getParameter("uLevel");
+
+		ProductPreview preview=null;
+		try {
+			preview = new ProductManager().previewProductDetail(uGroup, uLevel);
+		} catch (Exception e) {
+			preview.setSuccess(false);
+			preview.setError(e.getMessage());
+		}
+		return output(preview);
 	}
 
 	/**

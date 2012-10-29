@@ -67,7 +67,7 @@ public class ProductManager {
 		
 		ArrayList<CatalogRatePlan> termPlans = new ArrayList<CatalogRatePlan>();
 		
-// TODO: Pull from Catalog Cache instead of Zuora
+//      TODO: Pull from Catalog Cache instead of Zuora
 //		CatalogModel data = Catalog.readCatalog();
 //
 //		for(CatalogGroup g : data.getCatalogGroups()){
@@ -125,5 +125,14 @@ public class ProductManager {
 		}
 		
 		detail.setAdditionalFeatures(addPlans);
+	}
+	
+	public ProductPreview previewProductDetail(String uGroup, String uLevel) throws Exception{
+
+		ProductPreview preview = new ProductPreview();
+		
+		
+		
+		return preview;
 	}
 }

@@ -46,7 +46,7 @@
 	var displayInfo = function(msg){
 		var vars = getUrlVars();
 		var group = vars["group"];
-		console.log(msg);
+
 		$("#productName").html("<h3>"+msg.productName+" - "+group+"</h3>");
 		
 		$("#rpDescription").html(msg.description);
@@ -69,8 +69,29 @@
 		
 		$("#loading").hide();
 		$("#detailPanel").show();
-		
 	}
+	
+	var recalculateSubtotal = function(){
+		//Pass Upgrade Path
+		var vars = getUrlVars();
+		var group = vars["group"];
+		var level = vars["level"];
+		
+		//Base Rate Plan
+		
+		//Addon Services
+		
+
+		$.getJSON("backend?type=PreviewProductDetail", {uGroup:group, uLevel:level},
+			function(data){
+				displayPreview(data.msg[0]);
+        	}
+		);
+	};
+
+	var displayPreview(msg){
+		console.log(msg);
+	}	
 
 </script>
 </head>
@@ -114,7 +135,9 @@
         <div id="loading"> loading... </div>
 
 		<div id="detailPanel">
-	        <div id="productName"></div>
+	        <div class="title">
+		        <div id="productName"></div>
+	        </div>
 	        <br>
 			<div id="termLength"></div>
 			<br>
