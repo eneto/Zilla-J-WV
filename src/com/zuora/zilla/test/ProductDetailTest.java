@@ -29,31 +29,50 @@ public class ProductDetailTest extends TestCase {
 		System.out.println("Done");
 	}
 	
-	public void testGetAdditionalProducts() throws Exception {
-		try {			
-			System.out.println("===Get Additional Products===\n");
+//	public void testGetAdditionalProducts() throws Exception {
+//		try {			
+//			System.out.println("===Get Additional Products===\n");
+//			
+//			ProductManager productManager = new ProductManager();
+//			ProductDetail detail = new ProductDetail();
+//			productManager.getAdditionalFeatures(detail);
+//			
+//			System.out.println(detail.getAdditionalFeatures().size() + " records found.");
+//
+//			System.out.println("Complete.");
+//
+//		} catch (Exception e){
+//			e.printStackTrace();
+//			fail(e.getMessage());
+//		}
+//	}	
+//
+//	public void testGetTermProducts() throws Exception {
+//		try {			
+//			System.out.println("===Get Term Products===\n");
+//
+//			String upgradeGroup = "Business";
+//			String upgradeLevel = "1";
+//
+//			System.out.print("Getting group " + upgradeGroup);
+//			System.out.println("... Getting level " + upgradeLevel);
+//			
+//			ProductManager productManager = new ProductManager();
+//			ProductDetail detail = new ProductDetail();
+//			productManager.getPlansByUpgradePath(detail, upgradeGroup, upgradeLevel);
+//			
+//			System.out.println(detail.getFrequencyPlans().size() + " records found.");
+//
+//			System.out.println("Complete.");
+//
+//		} catch (Exception e){
+//			e.printStackTrace();
+//			fail(e.getMessage());
+//		}
+//	}	
+	
 
-			System.out.print("Reading Catalog ... ");
-			Catalog.readCatalog();
-			System.out.println("Done");
-			
-			
-			
-			ProductManager productManager = new ProductManager();
-			ProductDetail detail = new ProductDetail();
-			productManager.getAdditionalFeatures(detail);
-			
-			System.out.println(detail.getAdditionalFeatures().size() + " records found.");
-
-			System.out.println("Complete.");
-
-		} catch (Exception e){
-			e.printStackTrace();
-			fail(e.getMessage());
-		}
-	}	
-
-	public void testGetTermProducts() throws Exception {
+	public void testGetUpgradeProduct() throws Exception {
 		try {			
 			System.out.println("===Get Term Products===\n");
 
@@ -62,18 +81,16 @@ public class ProductDetailTest extends TestCase {
 
 			System.out.print("Getting group " + upgradeGroup);
 			System.out.println("... Getting level " + upgradeLevel);
-
-			System.out.print("Reading Catalog ... ");
-			Catalog.readCatalog();
-			System.out.println("Done");
-			
+		
 			
 			
 			ProductManager productManager = new ProductManager();
-			ProductDetail detail = new ProductDetail();
-			productManager.getPlansByUpgradePath(detail, upgradeGroup, upgradeLevel);
+			ProductDetail detail = productManager.getProductByUpgradePath(upgradeGroup, upgradeLevel);
 			
-			System.out.println(detail.getFrequencyPlans().size() + " records found.");
+			System.out.println(detail.getFrequencyPlans().size() + " freq records found.");
+			System.out.println(detail.getAdditionalFeatures().size() + " add records found.");
+			System.out.println(detail.getProductName() + " is prod name.");
+			System.out.println(detail.getDescription() + " is desc.");
 
 			System.out.println("Complete.");
 

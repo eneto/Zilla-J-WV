@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import com.zuora.api.QueryResult;
 import com.zuora.api.object.Account;
+import com.zuora.api.object.Product;
 import com.zuora.api.object.ProductRatePlan;
 import com.zuora.api.object.ZObject;
 import com.zuora.zilla.model.*;
@@ -63,13 +64,27 @@ public class ProductManager {
 	}	
 
 	public void getPlansByUpgradePath(ProductDetail detail, String uGroup, String uLevel) throws Exception{
-		//TODO: Pull info from Catalog Cache instead of Zuora
 		
 		ArrayList<CatalogRatePlan> termPlans = new ArrayList<CatalogRatePlan>();
 		
-		QueryResult qr = zapi.zQuery("Select Id,Name,Description From ProductratePlan Where "+upgradeGroupField+"='"+uGroup+"' and "+upgradeLevelField+"='"+uLevel+"'");
+// TODO: Pull from Catalog Cache instead of Zuora
+//		CatalogModel data = Catalog.readCatalog();
+//
+//		for(CatalogGroup g : data.getCatalogGroups()){
+//			for(CatalogProduct prod : g.getProducts()){
+//				for(CatalogProduct prod : g.getProducts()){
+//					if(rp.getUpgradeGroup().equals(uGroup) && rp.getUpgradeLevel().equals(uLevel){
+//						termPlans = prod.getRatePlans();
+//					}
+//				}
+//			}
+//		}
+
+		
+		QueryResult qr = zapi.zQuery("Select Id,Name,Description,ProductId From ProductratePlan Where "+upgradeGroupField+"='"+uGroup+"' and "+upgradeLevelField+"='"+uLevel+"'");
 		
 		ZObject[] objs = qr.getRecords();
+		String prodId=null;
 		
 		for(ZObject obj : objs){
 			ProductRatePlan prp = (ProductRatePlan) obj;
@@ -77,6 +92,7 @@ public class ProductManager {
 			crp.setName(prp.getName());
 			crp.setId(prp.getId());
 			crp.setDescription(prp.getDescription());
+			prodId = prp.getProductId();
 			termPlans.add(crp);
 		}
 
@@ -86,6 +102,9 @@ public class ProductManager {
 		// Pull description for first RatePlan returned in Term Length Query
 		if(termPlans.size()>0){
 			detail.setDescription(termPlans.get(0).getDescription());
+			
+			QueryResult pqr = zapi.zQuery("select name from product where Id='"+prodId+"'");
+			detail.setProductName(((Product)pqr.getRecords()[0]).getName());
 		} else {
 			throw new Exception("No rate plans are available that match these parameters.");
 		}

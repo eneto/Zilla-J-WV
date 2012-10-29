@@ -26,43 +26,10 @@
 	$(document).ready(function(){
 		$("#infor").hide();
 		$("#loading").show();
-		
-		//This is where the logic goes to display everything.
+		$("#detailPanel").hide();
 		
 		getProductByUpgradePath()
 	});
-	
-	var emptyCart = function(){
-		$.getJSON("backend?type=EmptyCart",
-			function(data){
-				refreshCart(data.msg);
-        	}
-		);
-	}
-
-	var removeFromCart = function(event){
-		var buttonId = event.target.id;
-		var itemId = parseInt(buttonId.split('remove_item_')[1]);
-
-		$.getJSON("backend?type=RemoveItemFromCart", {itemId:itemId},
-			function(data){
-				refreshCart(data.msg);
-        	}
-		);
-	};
-
-	var addToCart = function(event){
-		var rpId = event.target.getAttribute('id');
-		var rpQtyField = $('#qty_'+rpId);
-		var rpQty = null;
-		if(rpQtyField.size()>0)
-			rpQty = rpQtyField.val();
-		$.getJSON("backend?type=AddItemToCart", {ratePlanId:rpId, quantity:rpQty},
-			function(data){
-				refreshCart(data.msg);
-        	}
-		);
-	};
 
 	var getProductByUpgradePath = function(){
 		var vars = getUrlVars();
@@ -71,11 +38,39 @@
 
 		$.getJSON("backend?type=GetProductByUpgradePath", {uGroup:group, uLevel:level},
 			function(data){
-				console.log(data);
+				displayInfo(data.msg[0]);
         	}
 		);
 	};
 
+	var displayInfo = function(msg){
+		var vars = getUrlVars();
+		var group = vars["group"];
+		console.log(msg);
+		$("#productName").html("<h3>"+msg.productName+" - "+group+"</h3>");
+		
+		$("#rpDescription").html(msg.description);
+		
+		
+		var termHtml = "<b>Choose a billing frequency</b><br>";
+		for(var i = 0; i < msg.frequencyPlans.length; i++){
+			var plan = msg.frequencyPlans[i];
+			termHtml += "<input type='radio' name='frequency' value='freq_"+plan.Id+"' " + (i==0 ? "checked" : "") + ">"+plan.Name+"<br>";
+		}		
+		$("#termLength").html(termHtml);
+		
+		
+		var addonHtml = "<b>Additional Features</b><br>";
+		for(var i = 0; i < msg.additionalFeatures.length; i++){
+			var plan = msg.additionalFeatures[i];
+			addonHtml += "<label><input type='checkbox' name='addon_"+plan.Id+"'>"+plan.Name+"</input></label><br>";
+		}
+		$("#additionalFeatures").html(addonHtml);
+		
+		$("#loading").hide();
+		$("#detailPanel").show();
+		
+	}
 
 </script>
 </head>
@@ -116,26 +111,23 @@
   <div id="main" class="edit_dv">
     <div id="left-main">
       <div class="left-main inner">
-        <div class="title">
-          <h3>Selected Product</h3>
-        </div>
-        
-		<div>
-			Rate Plan Description
-		</div>
-		
-		<div> 
-			Term Length
-		</div>
+        <div id="loading"> loading... </div>
 
-		<div> 
-			Additional Features
+		<div id="detailPanel">
+	        <div id="productName"></div>
+	        <br>
+			<div id="termLength"></div>
+			<br>
+			<div id="rpDescription"></div>
+			<br>
+			<div id="additionalFeatures"></div>
+			<br>
+			<div id="couponCode"> 
+				Coupon Code:<br>
+				<input type="text" name="coupon"></input><br>
+				<a href='javascript:' class='btn_submit item_button btn_apply_discount' id='apply_discount'>Apply Discount</a>
+			</div>
 		</div>
-		
-		<div> 
-			Coupon Code
-		</div>
-		
       </div>
     </div>
     <div id="right-sub">
@@ -146,7 +138,7 @@
         <ul class="chosen_plans">
         </ul>
 
-        <a href="subscribe.html" class="btn_submit item_button floatRight" style="margin-bottom: 15px">Next</a> 
+        <a href="subscribe.html" class="btn_submit floatRight" style="margin-bottom: 15px">Next</a> 
         <div class="clear-block"></div>
       </div>
     </div>

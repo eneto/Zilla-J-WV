@@ -10,12 +10,12 @@
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
 	<classpathentry kind="lib" path="lib/junit-4.10.jar"/>
 	<classpathentry kind="lib" path="lib/ZAxisPackage.jar"/>
-	<classpathentry kind="lib" path="lib/zuora-41.jar"/>
 	<classpathentry kind="lib" path="lib/jackson-core-asl-1.9.8.jar"/>
 	<classpathentry kind="lib" path="lib/jackson-mapper-asl-1.9.8.jar"/>
 	<classpathentry kind="lib" path="lib/commons-codec-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/json-simple-1.1.1.jar"/>
 	<classpathentry kind="lib" path="lib/wsc-20.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/zuora-43-vw.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
