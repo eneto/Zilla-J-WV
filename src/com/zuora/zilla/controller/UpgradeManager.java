@@ -175,7 +175,9 @@ public class UpgradeManager {
 		
 		// Clean the subscriptions based on the original subscription ID
 		String originalId = getOriginalId(subscriptionId);
-		removeFutureAmendments(originalId);
+		//removeFutureAmendments(originalId);
+		
+		logger.debug("Future amendments (if available) are removed from the subscription");
 		
 		Calendar endOfCycle = null;
 		
@@ -227,6 +229,11 @@ public class UpgradeManager {
 		
 		try {
 			AmendResult[] amResp = zapi.zAmend(new AmendRequest[] { amReq });
+			if (amResp[0].getSuccess()) {
+				logger.info("Succesfully removed Rate Plan id = " + oldRatePlanId);
+			} else {
+				logger.error("The RP (id = " + oldRatePlanId + ") can't be deleted..");
+			}
 			amenderResult.setSuccess(amResp[0].getSuccess());
 		} catch (Exception e) {
 			logger.error("Error during amend #1 - downgrade");
@@ -234,13 +241,26 @@ public class UpgradeManager {
 			amenderResult.setSuccess(false);
 		}
 		
-		// Step #3: Add the new rate plan
+		// Step #3a: Retrieve the correct subscription ID to add this product to
+		String previousSubscriptionId = null;
+		try {
+			QueryResult res = zapi.zQuery("select Id from Subscription where Status='Active' and OriginalId='" + originalId + "'");
+			Subscription sub = (Subscription) res.getRecords(0);
+			previousSubscriptionId = sub.getId();
+			
+		} catch (Exception e) {
+			logger.error("Couldn't retrieve an active subscription with original ID = " + originalId);
+		}
+		
+		logger.debug("Adding product to previous subscription ID = " + previousSubscriptionId);
+		
+		// Step #3b: Add the new rate plan
 		Amendment addProductAmendment = new Amendment();
 		
 		addProductAmendment.setName("Add Product");
 		addProductAmendment.setStatus("Completed");
 		addProductAmendment.setType("NewProduct");
-		addProductAmendment.setSubscriptionId(subscriptionId);
+		addProductAmendment.setSubscriptionId(previousSubscriptionId);
 		addProductAmendment.setContractEffectiveDate(endOfCycle);
 		addProductAmendment.setServiceActivationDate(endOfCycle);
 		addProductAmendment.setCustomerAcceptanceDate(endOfCycle);
@@ -269,6 +289,11 @@ public class UpgradeManager {
 		
 		try {
 			AmendResult[] amResp = zapi.zAmend(new AmendRequest[] { amReq2 });
+			if (amResp[0].getSuccess()) {
+				logger.info("Successfully added product rate plan id = " + newProductRatePlanId);
+			} else {
+				logger.debug("Couldn't add PRP (id = " + newProductRatePlanId + ") to subscription " + subscriptionId);
+			}
 			amenderResult.setSuccess(amResp[0].getSuccess());
 		} catch (Exception e) {
 			logger.error("Error during amend #2 - downgrade");
