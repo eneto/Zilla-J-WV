@@ -2,14 +2,9 @@ package com.zuora.zilla.model;
 
 import java.util.ArrayList;
 
-import org.codehaus.jackson.annotate.JsonProperty;
-
 public class ProductDetail {
 	private boolean success;
 	private String error;
-
-	private String group;
-	private String level;
 
 	private String productName;
 	private String upgradeGroup;
@@ -31,18 +26,6 @@ public class ProductDetail {
 	}
 	public void setError(String error) {
 		this.error = error;
-	}
-	public String getGroup() {
-		return group;
-	}
-	public void setGroup(String group) {
-		this.group = group;
-	}
-	public String getLevel() {
-		return level;
-	}
-	public void setLevel(String level) {
-		this.level = level;
 	}
 	public String getProductName() {
 		return productName;

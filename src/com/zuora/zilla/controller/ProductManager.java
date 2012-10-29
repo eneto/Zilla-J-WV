@@ -15,7 +15,7 @@ public class ProductManager {
 	/** The Zuora API instance used to handle soap calls. */
 	private ZApi zapi;
 	
-	private final String addOnProduct = "Add-on Products";
+	private final String addOnProductName = "Add-on Products";
 	private final String upgradeGroupField = "UpgradeGroup__c";
 	private final String upgradeLevelField = "UpgradeLevel__c";
 
@@ -79,7 +79,7 @@ public class ProductManager {
 			crp.setDescription(prp.getDescription());
 			termPlans.add(crp);
 		}
-		
+
 		detail.setFrequencyPlans(termPlans);
 
 		// Rate Plan Description
@@ -92,26 +92,17 @@ public class ProductManager {
 	}	
 
 	public void getAdditionalFeatures(ProductDetail detail) throws Exception{
-		//TODO: Pull info from Catalog Cache instead of Zuora
 
 		ArrayList<CatalogRatePlan> addPlans = new ArrayList<CatalogRatePlan>();
+
+		CatalogModel data = Catalog.readCatalog();
 		
-		QueryResult pqr = zapi.zQuery("Select Id from Product where Name='"+addOnProduct+"'");
-		if(pqr.getSize()!=1){
-			throw new Exception("Add On Product does not exist.");
-		}
-		String prodId = pqr.getRecords()[0].getId();
-		
-		QueryResult qr = zapi.zQuery("Select Id,Name From ProductratePlan Where ProductId='"+prodId+"'");
-		
-		ZObject[] objs = qr.getRecords();
-		
-		for(ZObject obj : objs){
-			ProductRatePlan prp = (ProductRatePlan) obj;
-			CatalogRatePlan crp = new CatalogRatePlan();
-			crp.setName(prp.getName());
-			crp.setId(prp.getId());
-			addPlans.add(crp);
+		for(CatalogGroup g : data.getCatalogGroups()){
+			for(CatalogProduct prod : g.getProducts()){
+				if(prod.getName().equals(addOnProductName)){
+					addPlans = prod.getRatePlans();
+				}
+			}
 		}
 		
 		detail.setAdditionalFeatures(addPlans);
