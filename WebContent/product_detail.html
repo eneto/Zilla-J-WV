@@ -29,10 +29,7 @@
 		
 		//This is where the logic goes to display everything.
 		
-		var vars = getUrlVars();
-		var group = vars["group"];
-		var level = vars["level"];
-		alert("Display plan of type [" + group + "], Level [" + level + "]");
+		getProductByUpgradePath()
 	});
 	
 	var emptyCart = function(){
@@ -67,7 +64,7 @@
 		);
 	};
 
-	var setupPrimaryProduct(){
+	var getProductByUpgradePath = function(){
 		var vars = getUrlVars();
 		var group = vars["group"];
 		var level = vars["level"];
@@ -144,7 +141,7 @@
     <div id="right-sub">
       <div class="right-sub inner">
         <div class="title">
-          <h3>Previerw</h3>
+          <h3>Preview</h3>
         </div>
         <ul class="chosen_plans">
         </ul>

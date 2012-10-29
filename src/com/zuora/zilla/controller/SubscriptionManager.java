@@ -354,9 +354,9 @@ public class SubscriptionManager {
 		df.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
 		Calendar today = Calendar.getInstance();
 		int mday = today.get(Calendar.DAY_OF_MONTH);
-		
+
 		ZuoraUtility zu = new ZuoraUtility();
-		
+
 		// Set up the account
 		Account acc = new Account();
 		acc.setAutoPay(Boolean.parseBoolean(zu.getPropertyValue("defaultAutopay")));
@@ -366,7 +366,7 @@ public class SubscriptionManager {
 		acc.setBatch(zu.getPropertyValue("defaultBatch"));
 		acc.setBillCycleDay(mday);
 		acc.setStatus("Active");
-		
+
 		try{
 			String strMakeSfdcAccount = zu.getPropertyValue("makeSfdcAccount");
 			boolean makeSfdcAccount = Boolean.parseBoolean(strMakeSfdcAccount);
@@ -384,7 +384,7 @@ public class SubscriptionManager {
 		} catch (Exception e){
 			System.out.println("Account not created");
 		}
-		
+
 		// Set up contact
 		Contact billToContact = new Contact();
 		billToContact.setAddress1(address1);
