@@ -11,7 +11,9 @@
 	<script type="application/javascript">
 	
 		$(document).ready(function(){
+			$('#loading').fadeIn('slow');
 			$.getJSON("backend?type=ReadUpgradeDowngrade", function(data){
+				$('#loading').fadeOut('slow');
 				var html = ""; // Prepare the final HTML output to be appended in the table
 				for (var i in data.msg[0].lowerRatePlan) {
 					var rp = data.msg[0].lowerRatePlan[i];
@@ -90,22 +92,36 @@
 			var buttonId = event.target.id;
 			var prpId = buttonId.split('downgrade_to_')[1];
 			
+			$('#loading').fadeIn('slow');
+			$('#rate-plan-table').animate({ opacity: 0.3 }, 100);
+			
 			$.getJSON("backend?type=DowngradeTo", {prpId:prpId},
 					function(data){
-						alert(data);
+						if (data.msg[0].success) {
+							window.location.replace("account_view.html");
+						} else {
+							alert("Downgrade unsuccessful, please contact WeVideo.");
+						}
 		        	}
 				);
 
-			alert(prpId);
+			//alert(prpId);
 		}
 		
 		function upgradeTo(event) {
 			var buttonId = event.target.id;
 			var prpId = buttonId.split('upgrade_to_')[1];
 			
+			$('#loading').fadeIn('slow');
+			$('#rate-plan-table').animate({ opacity: 0.3 }, 100);
+			
 			$.getJSON("backend?type=UpgradeTo", {prpId:prpId},
 					function(data){
-						alert(data);
+						if (data.msg[0].success) {
+							window.location.replace("account_view.html");
+						} else {
+							alert("Upgrade unsuccessful, please contact WeVideo.");
+						}
 		        	}
 				);
 
@@ -137,6 +153,8 @@
 <div id="web_main">
 	<div id="main" class="edit_dv">
 		<div id="left-main">
+			<h1 style="margin-top: 1em; margin-bottom: 2em;">Upgrade or Downgrade your plan</h1>
+			<div id="loading" style="margin-top: 1em; margin-bottom: 1em;"> loading... </div>
 			<table id="rate-plan-table">
 			</table>
 		</div>

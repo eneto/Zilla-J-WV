@@ -408,6 +408,8 @@ public class SubscriptionManager {
 		
 		Subscription subscription = new Subscription();
 		subscription.setContractEffectiveDate(today);
+		subscription.setContractAcceptanceDate(today); // Added for WeVideo
+		subscription.setServiceActivationDate(today); // idem
 		subscription.setTermStartDate(today);
 		subscription.setTermType("EVERGREEN");
 		subscription.setStatus("Active");
