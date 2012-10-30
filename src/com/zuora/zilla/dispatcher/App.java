@@ -246,10 +246,13 @@ public class App extends HttpServlet {
 		HttpSession session = request.getSession();
 		String uGroup = request.getParameter("uGroup");
 		String uLevel = request.getParameter("uLevel");
+		String baseId = request.getParameter("baseId");
+		String addons = request.getParameter("addons");
+		String coupon = request.getParameter("coupon");
 
-		ProductPreview preview=null;
+		ProductPreview preview=new ProductPreview();
 		try {
-			preview = new ProductManager().previewProductDetail(uGroup, uLevel);
+			preview = new ProductManager().previewProductDetail(uGroup, uLevel, baseId, addons, coupon);
 		} catch (Exception e) {
 			preview.setSuccess(false);
 			preview.setError(e.getMessage());

@@ -96,7 +96,6 @@ public class BackendServlet extends HttpServlet {
 				try {
 					body = new InvoiceManager().getLastInvoicePdf(email);
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				response.setContentType("application/pdf");

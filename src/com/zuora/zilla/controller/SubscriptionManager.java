@@ -483,7 +483,7 @@ public class SubscriptionManager {
 		PreviewOptions previewOptions = AccountSample.makePreviewOptions();
 
 		// Set up subscription
-		Subscription subscription = SubscriptionManager.makeSubscription();
+		Subscription subscription = AccountSample.makeSubscription();
 		SubscriptionData subscriptionData = new SubscriptionData();
 		try{
 			subscriptionData.setRatePlanData(SubscriptionManager.getSubscriptionDataRatePlanFromCart(cartHelper));
@@ -536,21 +536,6 @@ public class SubscriptionManager {
 			}
 		}
 		return preview;
-	}
-
-	/**
-	 * Make the current subscription
-	 * 
-	 * @return the subscription
-	 */
-	private static Subscription makeSubscription() {
-		Subscription subscription = new Subscription();
-		subscription
-				.setContractEffectiveDate(ZuoraUtility.getCurrentCalendar());
-		subscription.setTermStartDate(ZuoraUtility.getCurrentCalendar());
-		subscription.setTermType("EVERGREEN");
-		subscription.setStatus("Active");
-		return subscription;
 	}
 
 	/**

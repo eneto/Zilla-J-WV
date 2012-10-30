@@ -27,8 +27,9 @@
 		$("#infor").hide();
 		$("#loading").show();
 		$("#detailPanel").hide();
+		$("#previewAmountPanel").hide();
 		
-		getProductByUpgradePath()
+		getProductByUpgradePath();
 	});
 
 	var getProductByUpgradePath = function(){
@@ -39,6 +40,7 @@
 		$.getJSON("backend?type=GetProductByUpgradePath", {uGroup:group, uLevel:level},
 			function(data){
 				displayInfo(data.msg[0]);
+				calculateTotal();
         	}
 		);
 	};
@@ -48,50 +50,71 @@
 		var group = vars["group"];
 
 		$("#productName").html("<h3>"+msg.productName+" - "+group+"</h3>");
-		
-		$("#rpDescription").html(msg.description);
-		
-		
+	
 		var termHtml = "<b>Choose a billing frequency</b><br>";
 		for(var i = 0; i < msg.frequencyPlans.length; i++){
 			var plan = msg.frequencyPlans[i];
-			termHtml += "<input type='radio' name='frequency' value='freq_"+plan.Id+"' " + (i==0 ? "checked" : "") + ">"+plan.Name+"<br>";
+			termHtml += "<input type='radio' class='productOption' id='frequency_group' name='frequency' value='freq_"+plan.Id+"' " + (i==0 ? "checked" : "") + ">"+plan.Name+"<br>"+plan.Description+"<br>";
 		}		
 		$("#termLength").html(termHtml);
-		
-		
+
 		var addonHtml = "<b>Additional Features</b><br>";
 		for(var i = 0; i < msg.additionalFeatures.length; i++){
 			var plan = msg.additionalFeatures[i];
-			addonHtml += "<label><input type='checkbox' name='addon_"+plan.Id+"'>"+plan.Name+"</input></label><br>";
+			addonHtml += "<label><input type='checkbox' class='addon productOption' name='addon_"+plan.Id+"'><b>"+plan.Name+"</b>"+plan.Description+"</input></label><br>";
 		}
 		$("#additionalFeatures").html(addonHtml);
-		
+
 		$("#loading").hide();
 		$("#detailPanel").show();
+		
+		$(".productOption").click(calculateTotal);
+		$("#apply_discount").click(calculateTotal);
 	}
-	
-	var recalculateSubtotal = function(){
+
+	var calculateTotal = function(){
+		$("#calculating").show();
+		$("#previewAmountPanel").hide();
 		//Pass Upgrade Path
 		var vars = getUrlVars();
 		var group = vars["group"];
 		var level = vars["level"];
-		
-		//Base Rate Plan
-		
-		//Addon Services
-		
 
-		$.getJSON("backend?type=PreviewProductDetail", {uGroup:group, uLevel:level},
+		//Base Rate Plan
+		var selectedFreqField = $("input[name=frequency]:checked").val();
+		var baseId = selectedFreqField.split('freq_')[1];
+
+		//Addon Services
+		var addons = "";
+		var selectedAddonFields = $("input[class=addon]:checked");
+		for(var i = 0; i < selectedAddonFields.length; i++){
+			var addplan = selectedAddonFields[i];
+			var addId = addplan.name.split('addon_')[1];
+			if(i>0){addons+="|";}
+			addons+=addId;
+		}
+
+		//Discount Code
+		var couponCode = $("input:text[name=coupon]").val();
+
+		$.getJSON("backend?type=PreviewProductDetail", {uGroup:group, uLevel:level, baseId:baseId, addons:addons, coupon:couponCode},
 			function(data){
 				displayPreview(data.msg[0]);
         	}
 		);
 	};
 
-	var displayPreview(msg){
+	var displayPreview = function(msg){
 		console.log(msg);
-	}	
+		$("#calculating").hide();
+		$("#previewAmountPanel").show();
+		$("#previewAmount").html("$"+msg.previewAmount);
+		if(msg.discount){
+			$("#coupon_description").html("<font color='green'><b>"+msg.discountName+"</b>: " + msg.discountDescription + "</font>");
+		} else {			
+			$("#coupon_description").html("<font color='red'><b>No discount.</b></font>");
+		}
+	};
 
 </script>
 </head>
@@ -141,14 +164,13 @@
 	        <br>
 			<div id="termLength"></div>
 			<br>
-			<div id="rpDescription"></div>
-			<br>
 			<div id="additionalFeatures"></div>
 			<br>
 			<div id="couponCode"> 
 				Coupon Code:<br>
 				<input type="text" name="coupon"></input><br>
 				<a href='javascript:' class='btn_submit item_button btn_apply_discount' id='apply_discount'>Apply Discount</a>
+				<div id="coupon_description"></div>
 			</div>
 		</div>
       </div>
@@ -158,9 +180,8 @@
         <div class="title">
           <h3>Preview</h3>
         </div>
-        <ul class="chosen_plans">
-        </ul>
-
+	      <div class="loading" id="calculating"> calculating </div>
+          <div id="previewAmountPanel">First payment: <span id="previewAmount"></span></div>
         <a href="subscribe.html" class="btn_submit floatRight" style="margin-bottom: 15px">Next</a> 
         <div class="clear-block"></div>
       </div>

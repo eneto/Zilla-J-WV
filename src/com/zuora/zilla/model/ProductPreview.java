@@ -1,19 +1,26 @@
 package com.zuora.zilla.model;
 
-import java.util.ArrayList;
 
 public class ProductPreview {
 	private boolean success;
 	private String error;
 
-	private String previewAmount;
+	private double previewAmount;
 
 	private String baseDescription;
 	
 	private boolean discount;
+	private String discountName;
 	private String discountDescription;
+
 	public boolean isSuccess() {
 		return success;
+	}
+	public String getDiscountName() {
+		return discountName;
+	}
+	public void setDiscountName(String discountName) {
+		this.discountName = discountName;
 	}
 	public void setSuccess(boolean success) {
 		this.success = success;
@@ -24,10 +31,10 @@ public class ProductPreview {
 	public void setError(String error) {
 		this.error = error;
 	}
-	public String getPreviewAmount() {
+	public double getPreviewAmount() {
 		return previewAmount;
 	}
-	public void setPreviewAmount(String previewAmount) {
+	public void setPreviewAmount(double previewAmount) {
 		this.previewAmount = previewAmount;
 	}
 	public String getBaseDescription() {

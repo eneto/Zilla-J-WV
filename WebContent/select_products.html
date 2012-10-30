@@ -13,9 +13,9 @@
 	$(document).ready(function(){
 		$("#infor").hide();
 		$("#loading").show();
-		
+
 		getInitialCart();
-		
+
 		$.getJSON("backend?type=ReadCatalog",
 			function(data){
 				var msg = data.msg[0];
@@ -30,14 +30,14 @@
 			emptyCart();
 		});
 	});
-	
+
 	function isNumberKey(evt){
 		var charCode = (evt.which) ? evt.which : event.keyCode
 		if (charCode > 31 && (charCode < 48 || charCode > 57))
 			return false;
 		return true;
 	}
-	
+
 	var emptyCart = function(){
 		$.getJSON("backend?type=EmptyCart",
 			function(data){

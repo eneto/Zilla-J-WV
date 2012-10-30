@@ -49,6 +49,21 @@ public class AccountSample {
 	}
 
 	/**
+	 * Make the current subscription
+	 * 
+	 * @return the subscription
+	 */
+	public static Subscription makeSubscription() {
+		Subscription subscription = new Subscription();
+		subscription
+				.setContractEffectiveDate(ZuoraUtility.getCurrentCalendar());
+		subscription.setTermStartDate(ZuoraUtility.getCurrentCalendar());
+		subscription.setTermType("EVERGREEN");
+		subscription.setStatus("Active");
+		return subscription;
+	}
+
+	/**
 	 * Make preview options.
 	 * 
 	 * @return the options

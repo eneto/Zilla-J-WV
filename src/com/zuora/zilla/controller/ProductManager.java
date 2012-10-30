@@ -2,12 +2,22 @@ package com.zuora.zilla.controller;
 
 import java.util.ArrayList;
 
+import com.zuora.api.PreviewOptions;
 import com.zuora.api.QueryResult;
+import com.zuora.api.RatePlanData;
+import com.zuora.api.SubscribeOptions;
+import com.zuora.api.SubscribeRequest;
+import com.zuora.api.SubscribeResult;
+import com.zuora.api.SubscriptionData;
 import com.zuora.api.object.Account;
+import com.zuora.api.object.Contact;
 import com.zuora.api.object.Product;
 import com.zuora.api.object.ProductRatePlan;
+import com.zuora.api.object.RatePlan;
+import com.zuora.api.object.Subscription;
 import com.zuora.api.object.ZObject;
 import com.zuora.zilla.model.*;
+import com.zuora.zilla.util.AccountSample;
 import com.zuora.zilla.util.ZApi;
 import com.zuora.zilla.util.ZuoraUtility;
 
@@ -31,7 +41,7 @@ public class ProductManager {
 
 	/**
 	 * Retrieves information necessary for displaying the details of a particular upgradable product. Includes Rate Plan Description, term options, and additional features.
-	 * To use this functionality, custom fields UpgradeGroup__c and UpgradeLevel__c must be defined at the Rate Plan level, and there must be one product titled "Add-On Products"
+	 * To use this functionality, custom fields UpgradeGroup__c and UpgradeLevel__c must be defined at the ProductRatePlan level, and there must be one product titled "Add-On Products"
 	 * with each rate plan representing a potential add-on product that the user can select.
 	 * 
 	 * @param uGroup
@@ -115,7 +125,7 @@ public class ProductManager {
 		ArrayList<CatalogRatePlan> addPlans = new ArrayList<CatalogRatePlan>();
 
 		CatalogModel data = Catalog.readCatalog();
-		
+
 		for(CatalogGroup g : data.getCatalogGroups()){
 			for(CatalogProduct prod : g.getProducts()){
 				if(prod.getName().equals(addOnProductName)){
@@ -123,15 +133,73 @@ public class ProductManager {
 				}
 			}
 		}
-		
+
 		detail.setAdditionalFeatures(addPlans);
 	}
-	
-	public ProductPreview previewProductDetail(String uGroup, String uLevel) throws Exception{
+
+	public ProductPreview previewProductDetail(String uGroup, String uLevel, String baseId, String addons, String coupon) throws Exception{
 
 		ProductPreview preview = new ProductPreview();
+
+		//Set up product rate plans: Include Base product, add ons, and discount
+
+		//Base Plan = baseId
+		QueryResult qrBase = zapi.zQuery("Select Description from ProductRatePlan where Id='"+baseId+"'");
+		if(qrBase.getSize()==1){
+			preview.setBaseDescription(((ProductRatePlan) qrBase.getRecords()[0]).getDescription());
+		}
+
+		//Add-ons = delimited addons
+		String[] addonIds;
+		if(addons.equals("")){
+			addonIds = new String[] { };
+		} else if(!addons.contains("|")){
+			addonIds = new String[] { addons };
+		} else {
+			addonIds = addons.split("\\|");			
+		}
+
+		//Query Zuora for Discount coupon codes (CouponCode__c on ProductRatePlan)
+		String discountId = null;
+		try{
+			if(coupon.equals("")){
+				preview.setDiscount(false);
+			} else {
+				QueryResult qr = zapi.zQuery("Select Id,Name,Description from ProductRatePlan where CouponCode__c='"+coupon+"'");
+				if(qr.getSize()==0){
+					preview.setDiscount(false);
+				} else {
+					ProductRatePlan discRp = (ProductRatePlan) qr.getRecords()[0];
+					preview.setDiscountName(discRp.getName());
+					preview.setDiscountDescription(discRp.getDescription());
+					discountId = discRp.getId();
+					preview.setDiscount(true);
+				}
+			}
+		} catch (Exception e){
+			preview.setDiscount(false);
+		}
+
+		CartHelper pcart = new CartHelper();
+
+		pcart.addCartItem(baseId, "1");
+		for(String addonId : addonIds){
+			pcart.addCartItem(addonId, "1");
+		}
+		if(preview.isDiscount()){
+			pcart.addCartItem(discountId, "1");
+		}
+
+		SubscriptionManager subscriptionManager = new SubscriptionManager();
+
+		SubscribePreview sprev = subscriptionManager.previewCurrentCart(pcart);
 		
-		
+		preview.setSuccess(sprev.isSuccess());
+		if(sprev.isSuccess()){
+			preview.setPreviewAmount(sprev.getInvoiceAmount());
+		} else {
+			preview.setError(sprev.getError());
+		}
 		
 		return preview;
 	}
