@@ -3,6 +3,7 @@ package com.zuora.zilla.controller;
 import java.math.BigDecimal;
 import java.rmi.RemoteException;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -152,7 +153,7 @@ public class SubscriptionManager {
 						newCharge.setChargeModel(rpc.getChargeModel());
 						newCharge.setProductRatePlanChargeId(rpc.getProductRatePlanChargeId());
 						
-						if (!rpc.getChargeModel().equals("Flat Fee Pricing") && !rpc.getChargeType().equals("Usage")) {
+						if (!rpc.getChargeModel().equals("Flat Fee Pricing") && !rpc.getChargeModel().equals("Discount-Fixed Amount") && !rpc.getChargeModel().equals("Discount-Percentage") && !rpc.getChargeType().equals("Usage")) {
 							newPlan.setUom(rpc.getUOM());
 							newPlan.setQuantity(rpc.getQuantity().toPlainString());
 							newCharge.setUom(rpc.getUOM());
@@ -244,10 +245,14 @@ public class SubscriptionManager {
 						newCharge.setProductRatePlanChargeId(rpc.getProductRatePlanChargeId());
 						
 						if (!rpc.getChargeModel().equals("Flat Fee Pricing") && rpc.getChargeType()!="Usage") {
-							newPlan.setUom(rpc.getUOM());
-							newPlan.setQuantity(rpc.getQuantity().toPlainString());
-							newCharge.setUom(rpc.getUOM());
-							newCharge.setQuantity(rpc.getQuantity().toPlainString());
+							if(rpc.getUOM()!=null){
+								newPlan.setUom(rpc.getUOM());
+								newCharge.setUom(rpc.getUOM());
+							}
+							if(rpc.getQuantity()!=null){
+								newPlan.setQuantity(rpc.getQuantity().toPlainString());
+								newCharge.setQuantity(rpc.getQuantity().toPlainString());
+							}
 						}
 						
 						// For all charges, find maximum ChargedThroughDate
@@ -354,9 +359,9 @@ public class SubscriptionManager {
 		df.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
 		Calendar today = Calendar.getInstance();
 		int mday = today.get(Calendar.DAY_OF_MONTH);
-		
+
 		ZuoraUtility zu = new ZuoraUtility();
-		
+
 		// Set up the account
 		Account acc = new Account();
 		acc.setAutoPay(Boolean.parseBoolean(zu.getPropertyValue("defaultAutopay")));
@@ -366,7 +371,7 @@ public class SubscriptionManager {
 		acc.setBatch(zu.getPropertyValue("defaultBatch"));
 		acc.setBillCycleDay(mday);
 		acc.setStatus("Active");
-		
+
 		try{
 			String strMakeSfdcAccount = zu.getPropertyValue("makeSfdcAccount");
 			boolean makeSfdcAccount = Boolean.parseBoolean(strMakeSfdcAccount);
@@ -384,7 +389,7 @@ public class SubscriptionManager {
 		} catch (Exception e){
 			System.out.println("Account not created");
 		}
-		
+
 		// Set up contact
 		Contact billToContact = new Contact();
 		billToContact.setAddress1(address1);
@@ -485,7 +490,7 @@ public class SubscriptionManager {
 		PreviewOptions previewOptions = AccountSample.makePreviewOptions();
 
 		// Set up subscription
-		Subscription subscription = SubscriptionManager.makeSubscription();
+		Subscription subscription = AccountSample.makeSubscription();
 		SubscriptionData subscriptionData = new SubscriptionData();
 		try{
 			subscriptionData.setRatePlanData(SubscriptionManager.getSubscriptionDataRatePlanFromCart(cartHelper));
@@ -518,7 +523,7 @@ public class SubscriptionManager {
 		if(resp.getSuccess()){
 			if(resp.getInvoiceData()!=null){
 				//For a successful preview with invoice, return the amount.
-				preview.setInvoiceAmount(resp.getInvoiceData()[0].getInvoice().getAmount().doubleValue());
+				preview.setInvoiceAmount(roundTwoDecimals(resp.getInvoiceData()[0].getInvoice().getAmount().doubleValue()));
 				preview.setSuccess(true);
 			} else {
 				//For a successful preview with a zero-dollar invvoice, return 0.00.
@@ -538,21 +543,6 @@ public class SubscriptionManager {
 			}
 		}
 		return preview;
-	}
-
-	/**
-	 * Make the current subscription
-	 * 
-	 * @return the subscription
-	 */
-	private static Subscription makeSubscription() {
-		Subscription subscription = new Subscription();
-		subscription
-				.setContractEffectiveDate(ZuoraUtility.getCurrentCalendar());
-		subscription.setTermStartDate(ZuoraUtility.getCurrentCalendar());
-		subscription.setTermType("EVERGREEN");
-		subscription.setStatus("Active");
-		return subscription;
 	}
 
 	/**
@@ -628,4 +618,10 @@ public class SubscriptionManager {
 		}
 		return rpdsArray;
 	}
+	
+	public static double roundTwoDecimals(double d) {
+        DecimalFormat twoDForm = new DecimalFormat("#.##");
+        return Double.valueOf(twoDForm.format(d));
+	}
+
 }

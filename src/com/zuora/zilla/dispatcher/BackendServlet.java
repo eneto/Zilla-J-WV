@@ -115,7 +115,10 @@ public class BackendServlet extends HttpServlet {
 				
 			} else if (type.equalsIgnoreCase("GetPaymentMethodSummary")) {
 				output = backend.getPaymentMethodSummary(request);
-				
+			} else if (type.equalsIgnoreCase("GetProductByUpgradePath")) {
+				output = backend.getProductByUpgradePath(request);
+			} else if (type.equalsIgnoreCase("PreviewProductDetail")) {
+				output = backend.previewProductDetail(request);
 			} else if (type.equalsIgnoreCase("GetLastPdf")) {
 				HttpSession session = request.getSession();
 				String email = (String) session.getAttribute("username");
@@ -123,7 +126,6 @@ public class BackendServlet extends HttpServlet {
 				try {
 					body = new InvoiceManager().getLastInvoicePdf(email);
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				response.setContentType("application/pdf");

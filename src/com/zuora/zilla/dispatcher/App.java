@@ -220,7 +220,48 @@ public class App extends HttpServlet {
 		}
 		return output(summary);
 	}
-	
+
+	/**
+	 * Return product and add-on information for a product that's part of an upgrade path
+	 */
+	public String getProductByUpgradePath(HttpServletRequest request) {
+		HttpSession session = request.getSession();
+		String uGroup = request.getParameter("uGroup");
+		String uLevel = request.getParameter("uLevel");
+
+		ProductDetail detail=null;
+		try {
+			detail = new ProductManager().getProductByUpgradePath(uGroup, uLevel);
+		} catch (Exception e) {
+			detail.setSuccess(false);
+			detail.setError(e.getMessage());
+		}
+		return output(detail);
+	}
+
+	/**
+	 * Return payment method summary for the user with the given account name
+	 */
+	public String previewProductDetail(HttpServletRequest request) {
+		HttpSession session = request.getSession();
+		String uGroup = request.getParameter("uGroup");
+		String uLevel = request.getParameter("uLevel");
+		String baseId = request.getParameter("baseId");
+		String addons = request.getParameter("addons");
+		String coupon = request.getParameter("coupon");
+
+		ProductPreview preview=new ProductPreview();
+		try {
+			preview = new ProductManager().previewProductDetail(uGroup, uLevel, baseId, addons, coupon);
+
+			session.setAttribute("cart", preview.getCart());
+		} catch (Exception e) {
+			preview.setSuccess(false);
+			preview.setError(e.getMessage());
+		}
+		return output(preview);
+	}
+
 	/**
 	 * Add a Rate Plan to the user's subscription
 	 */

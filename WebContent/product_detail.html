@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link type="text/css" rel="stylesheet" href="css/style.css" />
+<link type="text/css" rel="stylesheet" href="css/karma-teal-grey.css" />
+<link href="css/structure.css" rel="stylesheet" type="text/css" />
+<title>Product Detail</title>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/function.js"></script>
+<script type="application/javascript" >
+
+	function getUrlVars()
+	{
+	    var vars = [], hash;
+	    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+	    for(var i = 0; i < hashes.length; i++)
+	    {
+	        hash = hashes[i].split('=');
+	        vars.push(hash[0]);
+	        vars[hash[0]] = hash[1];
+	    }
+	    return vars;
+	}
+
+	$(document).ready(function(){
+		$("#infor").hide();
+		$("#loading").show();
+		$("#detailPanel").hide();
+		$("#previewAmountPanel").hide();
+		
+		getProductByUpgradePath();
+	});
+
+	var getProductByUpgradePath = function(){
+		var vars = getUrlVars();
+		var group = vars["group"];
+		var level = vars["level"];
+
+		$.getJSON("backend?type=GetProductByUpgradePath", {uGroup:group, uLevel:level},
+			function(data){
+				displayInfo(data.msg[0]);
+				calculateTotal();
+        	}
+		);
+	};
+
+	var displayInfo = function(msg){
+		var vars = getUrlVars();
+		var group = vars["group"];
+
+		$("#productName").html("<h3>"+msg.productName+" - "+group+"</h3>");
+	
+		var termHtml = "<b>Choose a billing frequency</b><br>";
+		for(var i = 0; i < msg.frequencyPlans.length; i++){
+			var plan = msg.frequencyPlans[i];
+			termHtml += "<input type='radio' class='productOption' id='frequency_group' name='frequency' value='freq_"+plan.Id+"' " + (i==0 ? "checked" : "") + ">"+plan.Name+"<br>"+plan.Description+"<br>";
+		}		
+		$("#termLength").html(termHtml);
+
+		var addonHtml = "<b>Additional Features</b><br>";
+		for(var i = 0; i < msg.additionalFeatures.length; i++){
+			var plan = msg.additionalFeatures[i];
+			addonHtml += "<label><input type='checkbox' class='addon productOption' name='addon_"+plan.Id+"'><b>"+plan.Name+"</b>"+plan.Description+"</input></label><br>";
+		}
+		$("#additionalFeatures").html(addonHtml);
+
+		$("#loading").hide();
+		$("#detailPanel").show();
+		
+		$(".productOption").click(calculateTotal);
+		$("#apply_discount").click(calculateTotal);
+	}
+
+	var calculateTotal = function(){
+		$("#calculating").show();
+		$("#previewAmountPanel").hide();
+		//Pass Upgrade Path
+		var vars = getUrlVars();
+		var group = vars["group"];
+		var level = vars["level"];
+
+		//Base Rate Plan
+		var selectedFreqField = $("input[name=frequency]:checked").val();
+		var baseId = selectedFreqField.split('freq_')[1];
+
+		//Addon Services
+		var addons = "";
+		var selectedAddonFields = $("input.addon:checked");
+		for(var i = 0; i < selectedAddonFields.length; i++){
+			var addplan = selectedAddonFields[i];
+			var addId = addplan.name.split('addon_')[1];
+			if(i>0){addons+="|";}
+			addons+=addId;
+		}
+
+		//Discount Code
+		var couponCode = $("input:text[name=coupon]").val();
+
+		$.getJSON("backend?type=PreviewProductDetail", {uGroup:group, uLevel:level, baseId:baseId, addons:addons, coupon:couponCode},
+			function(data){
+				displayPreview(data.msg[0]);
+        	}
+		);
+	};
+
+	var displayPreview = function(msg){
+		console.log(msg);
+		$("#calculating").hide();
+		$("#previewAmountPanel").show();
+		$("#previewAmount").html("$"+msg.previewAmount);
+		if(msg.discount){
+			$("#coupon_description").html("<font color='green'><b>"+msg.discountName+"</b>: " + msg.discountDescription + "</font>");
+		} else {			
+			$("#coupon_description").html("");
+		}
+	};
+
+</script>
+</head>
+<body>
+
+<!-- start Header -->
+
+<div id="wrapper">
+<div id="header">
+<div class="header-holder">
+<div class="rays">
+<div class="header-area">
+<a class="logo" href="index.html"><img alt="Zuora Home Page" src="images/logo.png" /></a>
+</div><!-- header-area -->
+</div><!-- end rays -->
+</div><!-- end header-holder -->
+</div>
+</div>
+
+
+<!-- end header -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="web_main">
+  <div id="main" class="edit_dv">
+    <div id="left-main">
+      <div class="left-main inner">
+        <div id="loading"> loading... </div>
+
+		<div id="detailPanel">
+	        <div class="title">
+		        <div id="productName"></div>
+	        </div>
+	        <br>
+			<div id="termLength"></div>
+			<br>
+			<div id="additionalFeatures"></div>
+			<br>
+			<div id="couponCode"> 
+				Coupon Code:<br>
+				<input type="text" name="coupon"></input><br>
+				<a href='javascript:' class='btn_submit item_button btn_apply_discount' id='apply_discount'>Apply Discount</a>
+				<div id="coupon_description"></div>
+			</div>
+		</div>
+      </div>
+    </div>
+    <div id="right-sub">
+      <div class="right-sub inner">
+        <div class="title">
+          <h3>Preview</h3>
+        </div>
+	      <div class="loading" id="calculating"> calculating </div>
+          <div id="previewAmountPanel">First payment: <span id="previewAmount"></span></div>
+        <a href="subscribe.html" class="btn_submit floatRight" style="margin-bottom: 15px">Next</a> 
+        <div class="clear-block"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+<!-- start footer -->
+
+
+<div id="footer">
+<div class="footer-area">
+<div class="footer-wrapper">
+<div class="footer-holder">
+<div class="one_fourth"><h3>News and Events</h3>
+</div><div class="one_fourth"><h3>Our Products</h3><ul class="sub-menu"><li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-5328" id="menu-item-5328"><a href="#/">Personal</a></li>
+<li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-5326" id="menu-item-5326"><a href="#">Professional</a></li>
+<li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-5327" id="menu-item-5327"><a href="#">Enterprise</a></li>
+</ul></div><div class="one_fourth">
+<h3>Follow Us</h3>		
+<ul class="social_icons">
+<li><a class="twitter" href="http://twitter.com/#!/zuora">Twitter</a></li>
+</ul>
+</div><div class="one_fourth_last"><h3>Contact Us</h3>
+<div class="textwidget"><p>Zuora</p>
+<p><a target="_blank" href="#">3400 Bridge Parkway<br>
+Suite 101<br>
+Redwood City, CA<br>
+</a></p>
+<p><a href="mailto:info@zuora.com">info@zuora.com </a></p>
+<p>Toll Free: 1-555-555-5555<br />
+Office:1-555-555-5555<br />
+Fax: 1-555-555-5555</p>
+</div>
+</div>
+</div><!-- footer-holder -->
+</div><!-- end footer-wrapper -->
+</div><!-- end footer-area -->
+</div>
+<div id="footer_bottom">
+  <div class="info">
+      <div id="foot_left">&nbsp;
+<div class="textwidget"><p>Copyright &copy; 2012 Zuora All rights reserved.</p>
+</div>
+	</div><!-- end foot_left -->
+<div id="foot_right"><div class="top-footer"></div>
+
+                    
+      </div><!-- end foot_right -->
+  </div><!-- end info -->
+</div>
+
+<!-- end footer -->
+
+
+
+
+</body>
+</html>
