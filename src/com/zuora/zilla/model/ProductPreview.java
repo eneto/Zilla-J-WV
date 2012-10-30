@@ -1,5 +1,7 @@
 package com.zuora.zilla.model;
 
+import com.zuora.zilla.controller.CartHelper;
+
 
 public class ProductPreview {
 	private boolean success;
@@ -12,7 +14,15 @@ public class ProductPreview {
 	private boolean discount;
 	private String discountName;
 	private String discountDescription;
+	
+	private CartHelper cart;
 
+	public CartHelper getCart() {
+		return cart;
+	}
+	public void setCart(CartHelper cart) {
+		this.cart = cart;
+	}
 	public boolean isSuccess() {
 		return success;
 	}

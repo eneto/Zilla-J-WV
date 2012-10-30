@@ -253,6 +253,8 @@ public class App extends HttpServlet {
 		ProductPreview preview=new ProductPreview();
 		try {
 			preview = new ProductManager().previewProductDetail(uGroup, uLevel, baseId, addons, coupon);
+
+			session.setAttribute("cart", preview.getCart());
 		} catch (Exception e) {
 			preview.setSuccess(false);
 			preview.setError(e.getMessage());

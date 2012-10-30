@@ -1,5 +1,6 @@
 package com.zuora.zilla.controller;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 import com.zuora.api.PreviewOptions;
@@ -182,12 +183,12 @@ public class ProductManager {
 
 		CartHelper pcart = new CartHelper();
 
-		pcart.addCartItem(baseId, "1");
+		pcart.addCartItem(baseId, "null");
 		for(String addonId : addonIds){
-			pcart.addCartItem(addonId, "1");
+			pcart.addCartItem(addonId, "null");
 		}
 		if(preview.isDiscount()){
-			pcart.addCartItem(discountId, "1");
+			pcart.addCartItem(discountId, "null");
 		}
 
 		SubscriptionManager subscriptionManager = new SubscriptionManager();
@@ -196,6 +197,7 @@ public class ProductManager {
 		
 		preview.setSuccess(sprev.isSuccess());
 		if(sprev.isSuccess()){
+			preview.setCart(pcart);
 			preview.setPreviewAmount(sprev.getInvoiceAmount());
 		} else {
 			preview.setError(sprev.getError());

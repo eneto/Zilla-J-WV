@@ -86,7 +86,7 @@
 
 		//Addon Services
 		var addons = "";
-		var selectedAddonFields = $("input[class=addon]:checked");
+		var selectedAddonFields = $("input.addon:checked");
 		for(var i = 0; i < selectedAddonFields.length; i++){
 			var addplan = selectedAddonFields[i];
 			var addId = addplan.name.split('addon_')[1];
@@ -112,7 +112,7 @@
 		if(msg.discount){
 			$("#coupon_description").html("<font color='green'><b>"+msg.discountName+"</b>: " + msg.discountDescription + "</font>");
 		} else {			
-			$("#coupon_description").html("<font color='red'><b>No discount.</b></font>");
+			$("#coupon_description").html("");
 		}
 	};
 

@@ -3,6 +3,7 @@ package com.zuora.zilla.controller;
 import java.math.BigDecimal;
 import java.rmi.RemoteException;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -516,7 +517,7 @@ public class SubscriptionManager {
 		if(resp.getSuccess()){
 			if(resp.getInvoiceData()!=null){
 				//For a successful preview with invoice, return the amount.
-				preview.setInvoiceAmount(resp.getInvoiceData()[0].getInvoice().getAmount().doubleValue());
+				preview.setInvoiceAmount(roundTwoDecimals(resp.getInvoiceData()[0].getInvoice().getAmount().doubleValue()));
 				preview.setSuccess(true);
 			} else {
 				//For a successful preview with a zero-dollar invvoice, return 0.00.
@@ -611,4 +612,10 @@ public class SubscriptionManager {
 		}
 		return rpdsArray;
 	}
+	
+	public static double roundTwoDecimals(double d) {
+        DecimalFormat twoDForm = new DecimalFormat("#.##");
+        return Double.valueOf(twoDForm.format(d));
+	}
+
 }
